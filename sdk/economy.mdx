@@ -1,70 +1,98 @@
 ---
 title: "Economy"
-description: "Wallet, spend, IAP validation, and store catalog"
+description: "Platform wallet, store catalogue, and purchases"
 ---
 
-## Get wallet
+Every balance and inventory change happens on the server. The client can read state and request
+a transaction, but it can never write a balance.
 
-```javascript
-const wallet = await SusaPlay.economy.getWallet()
-// Returns: { gameId, balances: { diamonds: 500, coins: 1200 } }
+## Platform wallet
+
+The platform wallet is shared across games. Players top it up with real money and spend it
+anywhere on SusaPlay.
+
+```csharp
+var wallet = await SusaPlaySDK.Purchases.GetPlatformWallet();
+if (wallet.Success)
+{
+    // Inspect wallet.Wallet for the current balance
+}
 ```
 
-## Spend currency
+## Store catalogue
 
-```javascript
-await SusaPlay.economy.spend({
-  gameId: 'your-game-id',
-  currency: 'diamonds',
-  amount: 100,
-  itemId: 'sword_of_fire',
-  idempotencyKey: crypto.randomUUID(), // unique per transaction
-})
+```csharp
+var store = await SusaPlaySDK.Purchases.GetStoreItems();
 ```
+
+Items come from the economy config you defined in the Developer Portal.
+
+## Spending
+
+```csharp
+var result = await SusaPlaySDK.Purchases.SpendPlatformWallet("sword_of_fire");
+
+if (result.Success)
+{
+    GrantItemLocally("sword_of_fire");
+}
+else
+{
+    Debug.LogWarning($"{result.ErrorCode}: {result.ErrorMessage}");
+}
+```
+
+The price is read from the economy config inside the same transaction that debits the wallet, so
+a price change mid-flight cannot be exploited.
+
+Grant the item in your game only after `Success` is true. Never grant optimistically.
+
+## Real-money purchases
+
+Checkout is handled by the shell through Xsolla. Your game starts the flow and awaits the
+outcome.
+
+```csharp
+// Buy a specific item
+var purchase = await SusaPlaySDK.Purchases.StartDirectItemPurchase("starter_pack");
+
+// Or top up the platform wallet
+var topup = await SusaPlaySDK.Purchases.StartWalletTopupPurchase("coins_100");
+```
+
+Available top-up packs:
+
+```csharp
+var packs = await SusaPlaySDK.Purchases.GetTopupPacks();
+```
+
+`XsollaPurchaseResult`:
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `Success` | `bool` | True only when payment completed and rewards were credited |
+| `Status` | `string` | `paid`, `canceled`, `timeout` |
+| `PlatformWallet` | object | Balance after the transaction |
+| `ErrorCode`, `ErrorMessage` | `string` | Populated on failure |
+
+The purchase call waits up to three minutes — a player has to move through a real checkout. Show
+a waiting state rather than blocking input.
 
 <Warning>
-  Always pass a unique `idempotencyKey` per transaction. Reusing a key on retry is safe — the server will deduplicate. Never hardcode the same key.
+Entitlements are granted by the payment webhook on the server, not by this return value. If the
+player closes the tab mid-checkout, the purchase can still complete. Re-read the wallet on the
+next session rather than assuming a cancelled checkout means no charge.
 </Warning>
 
-## Validate IAP purchase
+## Sandbox
 
-```javascript
-// iOS
-await SusaPlay.economy.validatePurchase({
-  platform: 'ios',
-  productId: 'com.game.pack1',
-  receipt: appleTransactionReceipt,
-})
+Every purchase method takes a `sandbox` flag for testing against Xsolla's sandbox:
 
-// Android
-await SusaPlay.economy.validatePurchase({
-  platform: 'android',
-  productId: 'com.game.pack1',
-  purchaseToken: googlePurchaseToken,
-})
+```csharp
+await SusaPlaySDK.Purchases.StartDirectItemPurchase("starter_pack", sandbox: true);
 ```
 
-On success, the associated rewards are credited to the player's wallet.
+## In-app purchases (iOS / Android)
 
-## Get store catalog
-
-```javascript
-const catalog = await SusaPlay.economy.getCatalog()
-// Returns items from economy config: id, name, price, type
-```
-
-## Get inventory
-
-```javascript
-const inventory = await SusaPlay.economy.getInventory()
-// Returns: { items: [{ itemId, quantity, unlockedAt }] }
-```
-
-## Error codes
-
-| Code | Cause |
-| --- | --- |
-| `INSUFFICIENT_BALANCE` | Not enough currency to spend |
-| `DUPLICATE_PURCHASE` | Receipt already validated |
-| `INVALID_RECEIPT` | Apple/Google rejected the receipt |
-| `GAME_NOT_FOUND` | Game key doesn't match active game |
+Native store receipt validation exists in the backend but is currently disabled. Real-money
+purchases go through Xsolla for all platforms today.

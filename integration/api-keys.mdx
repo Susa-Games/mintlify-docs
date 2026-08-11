@@ -15,19 +15,24 @@ description: "Keep publishing credentials scoped and rotate them safely"
 
 **Game key goes in the client.** Never put admin credentials or the developer API key inside game code — they have wider permissions.
 
-```javascript
-// Correct — game key in client
-await SusaPlay.init({ gameKey: 'gk_xxxxxxxxxxxxxxxxxxxxxxxx' })
+In Unity the game key lives in the `PlatformConfig` asset, created via **susaplay → Create Config
+Asset**. `SusaPlaySDK.Initialize()` reads it from there.
+
+```csharp
+// Correct — the SDK reads the key from PlatformConfig
+await SusaPlaySDK.Initialize();
 ```
 
-**Separate production and test keys.** Use environment variables so builds never share credentials:
+Never hardcode the key in a script. Anything compiled into a WebGL build is readable by anyone
+who opens the browser devtools, so treat the game key as public — it is scoped to a single game
+and grants nothing beyond it.
 
-```bash
-# .env.production
-VITE_GAME_KEY=gk_prod_xxxx
+**Separate production and test keys.** Keep a separate `PlatformConfig` asset per environment and
+swap it at build time, so a test build can never talk to production:
 
-# .env.development
-VITE_GAME_KEY=gk_test_xxxx
+```text
+Assets/SusaPlay/PlatformConfig.asset          # production
+Assets/SusaPlay/PlatformConfig.staging.asset  # staging
 ```
 
 ## Generate or rotate a key

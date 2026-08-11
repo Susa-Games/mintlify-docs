@@ -5,21 +5,39 @@ description: "Submit playable builds for review and version tracking"
 
 ## WebGL build structure
 
-Zip must have `index.html` at the root:
+The zip must contain `index.html` and a `*.loader.js` file:
 
 ```text
 your-build.zip
-├── index.html          ← required at root
+├── index.html          ← required
 ├── Build/
+│   ├── game.loader.js  ← required
 │   ├── game.wasm
 │   ├── game.data
 │   └── game.framework.js
 └── TemplateData/
 ```
 
+A single wrapping folder is fine — if Unity exports to `WebGLBuild/`, the upload strips that
+prefix for you. What fails is a zip with several top-level folders and no `index.html` inside any
+single one.
+
+`__MACOSX/` and `._` entries created by macOS are ignored automatically.
+
 <Warning>
-  Nested zips (a zip inside a zip) are rejected. If Unity exports to a subfolder, flatten it before uploading.
+Missing either `index.html` or a `*.loader.js` file is rejected with
+`Invalid build: missing index.html or loader file`.
 </Warning>
+
+### Archive limits
+
+| Limit | Value |
+| --- | --- |
+| Files in the archive | 1,000 |
+| Single file, uncompressed | 200 MB |
+| Whole archive, uncompressed | 1.5 GB |
+
+These are checked before extraction, so an oversized build fails fast rather than part-way.
 
 ## Upload via Developer Portal
 
@@ -48,10 +66,12 @@ curl -X POST https://api.susaplay.com/catalog/publish \
 | State | Meaning |
 | --- | --- |
 | `pending_review` | Submitted, awaiting review |
-| `approved` | Reviewed — can be set live |
 | `live` | Currently served to players |
 | `deprecated` | Replaced by a newer live version |
 | `rejected` | Failed review — fix issues and resubmit |
+
+A passing review moves a version straight to `live`. There is no separate approved-but-not-live
+state.
 
 ## Release notes checklist
 

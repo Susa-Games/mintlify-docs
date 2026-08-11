@@ -32,16 +32,21 @@ Watch ad → verify reward credited
 
 | Reason | Fix |
 | --- | --- |
-| Black screen on load | Check WebGL build structure — `index.html` at root |
-| Purchases not working | Verify IAP product IDs match store config exactly |
-| Auth loop | Test with fresh account, not dev account |
+| Upload rejected outright | Zip is missing `index.html` or a `*.loader.js` file |
+| Black screen on load | Check the browser console — usually a missing `Build/` asset |
+| Purchases not working | Verify item IDs match your economy config exactly |
+| Auth loop | Test with a fresh account, not a dev account |
 | Missing screenshots | Add at least one screenshot before submitting |
-| Broken on mobile | Test on actual device, not just desktop browser |
+| Broken on mobile | Test on an actual device, not just a desktop browser |
 
 ## After rejection
 
-Review the rejection notes in the portal. Fix the issue, upload a new build version, and resubmit. You don't need to re-register the game.
+Review the rejection notes in the portal. Fix the issue, upload a new build version, and
+resubmit. You don't need to re-register the game.
 
-## After approval
+## After the review passes
 
-The build is approved but not yet live. A SusaPlay admin sets it live — you'll receive a webhook event `BUILD_LIVE` when players can access it.
+A SusaPlay admin sets the version live. You'll receive the `BUILD_LIVE` webhook event when
+players can access it, and `BUILD_REJECTED` if it does not pass.
+
+The previous live version moves to `deprecated` and stops being served.

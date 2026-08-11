@@ -22,21 +22,31 @@ Developer Portal → your game → **Webhooks → Add Endpoint**
 | Event | Triggered when |
 | --- | --- |
 | `BUILD_RECEIVED` | Build upload completed |
-| `BUILD_LIVE` | Build approved and set live |
+| `BUILD_LIVE` | Build reviewed and set live |
+| `BUILD_REJECTED` | Build failed review |
 | `BUILD_DEPRECATED` | Build replaced by a newer live version |
-| `IAP_VALIDATED` | Purchase receipt validated |
 | `SDK_ANALYTICS_EVENT` | Player analytics event fired |
-| `CUSTOM_WEBHOOK_EVENT` | B2B partner event |
+| `CUSTOM_WEBHOOK_EVENT` | Event your game sent via `SusaPlaySDK.Webhooks.SendEvent` |
+
+Any other event name is silently dropped when you save the subscription — check the saved list
+in the portal to confirm what was accepted.
 
 ## Verify signatures
 
-Every request includes a `SusaPlay-Signature` header. **Always verify it before processing.**
+Every request carries two headers:
+
+| Header | Contents |
+| --- | --- |
+| `X-Platform-Signature` | HMAC-SHA256 of the raw body, hex-encoded, keyed with your webhook secret |
+| `X-Platform-Event` | The event name, so you can route without parsing first |
+
+**Always verify the signature before processing.**
 
 ```javascript
 import crypto from 'crypto'
 
 function verifySignature(req, secret) {
-  const signature = req.headers['susaplay-signature']
+  const signature = req.headers['x-platform-signature']
   const expected = crypto
     .createHmac('sha256', secret)
     .update(req.body) // raw body string, not parsed JSON
@@ -62,9 +72,23 @@ app.post('/webhook', express.raw({ type: '*/*' }), (req, res) => {
 
 ## Reliability rules
 
-- **Return 200 within 10 seconds.** Queue heavy processing async.
-- **Be idempotent.** The same event may be delivered more than once.
-- **Log failed deliveries.** Use the test-webhook button in the portal to debug.
+- **Return 200 within 5 seconds.** That is the delivery timeout — anything slower is recorded as
+  a failure.
+- **There are no retries.** A delivery that times out or returns an error is logged and dropped.
+  Treat webhooks as best-effort notifications, not a guaranteed queue. If a piece of state must
+  be correct, reconcile it against the API rather than relying on having received an event.
+- **Be idempotent anyway.** Respond fast, queue the work, and make replays harmless.
+- **Cap your endpoints.** A game can have at most 20 webhooks.
+
+## Secrets
+
+The signing secret is shown **once**, when you create the webhook. It cannot be read back
+afterwards — the portal only shows its last four characters. Store it in your own secret manager
+at creation time.
+
+If you lose it, or if you want to rotate on a schedule, use **rotate** in the portal. That issues
+a new secret and shows it once. Deliveries signed with the old secret stop verifying immediately,
+so update your endpoint in the same window.
 
 ## Test a webhook
 

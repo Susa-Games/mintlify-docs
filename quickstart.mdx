@@ -18,23 +18,46 @@ description: "Begin with a guide on the fastest path to a successful outcome"
 gk_xxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-## Step 2 — Initialize the SDK
+## Step 2 — Install the SDK
 
-```javascript
-import { SusaPlay } from '@susaplay/sdk'
+Add the package to your Unity project's `Packages/manifest.json`:
 
-await SusaPlay.init({ gameKey: 'gk_xxxxxxxxxxxxxxxxxxxxxxxx' })
-const player = await SusaPlay.identity.init()
+```json
+{
+  "dependencies": {
+    "com.susaplay.sdk": "https://github.com/susaplay/com.susaplay.sdk.git"
+  }
+}
 ```
 
-## Step 3 — Verify it works
+Then run **susaplay → Create Config Asset** from the Unity menu and paste your game key into it.
 
-```javascript
-const wallet = await SusaPlay.economy.getWallet()
-console.log('Player wallet:', wallet)
+## Step 3 — Initialize
+
+```csharp
+using susaplay.SDK;
+using UnityEngine;
+
+public class Bootstrap : MonoBehaviour
+{
+    private async void Start()
+    {
+        await SusaPlaySDK.Initialize();
+        Debug.Log($"Player: {SusaPlaySDK.Auth.DisplayName}");
+        SusaPlaySDK.MarkGameLoaded();
+    }
+}
 ```
 
-If you see a wallet response, you are connected.
+## Step 4 — Verify it works
+
+```csharp
+var wallet = await SusaPlaySDK.Purchases.GetPlatformWallet();
+Debug.Log($"Wallet: {wallet.Success}");
+```
+
+Build for WebGL, upload it, and open the game from the Developer Portal. If the console shows
+the player name and a wallet response, you are connected.
 
 ## Next steps
 
@@ -51,7 +74,7 @@ If you see a wallet response, you are connected.
     Submit your game for review
   </Card>
 
-  <Card title="LiveOps" icon="radio" href="/liveops/developer-guide">
-    Review and accept campaign content
+  <Card title="Cloud Saves" icon="floppy-disk" href="/integration/saves">
+    Persist player progress across sessions
   </Card>
 </CardGroup>

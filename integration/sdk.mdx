@@ -3,110 +3,144 @@ title: "SDK Integration"
 description: "Wire identity, saves, economy, and analytics into your game"
 ---
 
+The SusaPlay SDK is a Unity package written in C#. Your game runs inside the SusaPlay shell,
+and the SDK talks to the platform through that shell.
+
+<Note>
+There is currently no JavaScript SDK. All examples below are C# for Unity.
+</Note>
+
 ## Install
 
-<Tabs>
-  <Tab title="Unity (UPM)">
-    Add to your `Packages/manifest.json`:
+Add the package to your `Packages/manifest.json`:
 
-    ```json
-    {
-      "dependencies": {
-        "com.susaplay.sdk": "https://github.com/susaplay/com.susaplay.sdk.git"
-      }
-    }
-    ```
-  </Tab>
-  <Tab title="JavaScript">
-    ```bash
-    npm install @susaplay/sdk
-    ```
-  </Tab>
-</Tabs>
-
-## Initialize
-
-Call `init` once on startup, before any other SDK calls:
-
-```javascript
-import { SusaPlay } from '@susaplay/sdk'
-
-await SusaPlay.init({
-  gameKey: process.env.VITE_GAME_KEY,
-})
-
-const player = await SusaPlay.identity.init()
-console.log('Player ID:', player.uid)
-```
-
-## Identity
-
-```javascript
-// Authenticated player
-const player = await SusaPlay.identity.init()
-
-// Guest session (no account required)
-const guest = await SusaPlay.identity.initGuest()
-
-// Merge guest → authenticated after login
-await SusaPlay.identity.mergeGuest(guestToken, authToken)
-```
-
-## Economy
-
-```javascript
-// Read wallet
-const wallet = await SusaPlay.economy.getWallet()
-
-// Spend currency
-await SusaPlay.economy.spend({
-  currency: 'diamonds',
-  amount: 100,
-  itemId: 'sword_of_fire',
-  idempotencyKey: uniqueTransactionId,
-})
-
-// Validate IAP (server-side)
-await SusaPlay.economy.validatePurchase({
-  platform: 'ios',
-  productId: 'com.game.pack1',
-  receipt: appleReceiptData,
-})
-```
-
-## Saves
-
-```javascript
-// Write save
-await SusaPlay.saves.write({
-  slotId: 'main',
-  data: { level: 5, coins: 1200 },
-  version: currentVersion,
-})
-
-// Read save
-const save = await SusaPlay.saves.read({ slotId: 'main' })
-```
-
-## Error handling
-
-All SDK calls can throw — always wrap in try/catch:
-
-```javascript
-try {
-  const wallet = await SusaPlay.economy.getWallet()
-} catch (err) {
-  if (err.code === 'UNAUTHENTICATED') {
-    // Re-initialize session
-  } else {
-    // Log and surface to player
+```json
+{
+  "dependencies": {
+    "com.susaplay.sdk": "https://github.com/susaplay/com.susaplay.sdk.git"
   }
 }
 ```
 
+Requires Unity 2021.3 or later, with the WebGL build target.
+
+## Initialize
+
+Call `Initialize()` once on startup and await it before any other SDK call. It handshakes with
+the shell and populates every module.
+
+```csharp
+using susaplay.SDK;
+using UnityEngine;
+
+public class Bootstrap : MonoBehaviour
+{
+    private async void Start()
+    {
+        await SusaPlaySDK.Initialize();
+
+        Debug.Log($"Player: {SusaPlaySDK.Auth.DisplayName} ({SusaPlaySDK.Auth.Uid})");
+
+        // Tell the shell your game is ready so it can hide the loading screen.
+        SusaPlaySDK.MarkGameLoaded();
+    }
+}
+```
+
+`Initialize()` reads your game key from the `PlatformConfig` asset — create it with
+**susaplay → Create Config Asset** in the Unity menu. Do not hardcode the key.
+
+If the shell does not answer within 15 seconds, initialization logs an error and returns. The
+module properties stay null, so check before using them.
+
+## Identity
+
+Identity is resolved by the shell during initialization. There is nothing to call.
+
+```csharp
+string uid = SusaPlaySDK.Auth.Uid;
+string name = SusaPlaySDK.Auth.DisplayName;
+
+if (SusaPlaySDK.Auth.IsGuest)
+{
+    // Guest session — progress is tied to the browser, not an account.
+}
+```
+
+Guest-to-account merging is handled by the platform when the player signs in. The game does not
+drive it.
+
+## Economy
+
+```csharp
+// Platform wallet balance
+var wallet = await SusaPlaySDK.Purchases.GetPlatformWallet();
+
+// Store catalogue
+var store = await SusaPlaySDK.Purchases.GetStoreItems();
+
+// Spend platform-wallet currency on an item
+var result = await SusaPlaySDK.Purchases.SpendPlatformWallet("sword_of_fire");
+
+// Start a real-money purchase — the shell opens the Xsolla checkout
+var purchase = await SusaPlaySDK.Purchases.StartDirectItemPurchase("starter_pack");
+
+// Or top up the platform wallet
+var topup = await SusaPlaySDK.Purchases.StartWalletTopupPurchase("coins_100");
+```
+
+Every wallet and inventory mutation happens server-side. The client can never write a balance.
+
+## Saves
+
+```csharp
+// Write — data is any string, usually JSON you serialize yourself
+var saved = await SusaPlaySDK.CloudSave.Save("main", JsonUtility.ToJson(myState));
+if (saved.success)
+{
+    Debug.Log($"Saved version {saved.data.version}");
+}
+
+// Read
+var loaded = await SusaPlaySDK.CloudSave.Load("main");
+if (loaded.success)
+{
+    var state = JsonUtility.FromJson<MyState>(loaded.data.data);
+}
+```
+
+Versioning is handled by the platform. Slot size is capped at 500 KB.
+
+## Analytics
+
+```csharp
+SusaPlaySDK.Analytics.LogEvent("level_started", "{\"level\":3}");
+await SusaPlaySDK.Analytics.Flush();
+```
+
+`session_start` is emitted for you during `Initialize()`. See
+[Analytics](/sdk/analytics) for details.
+
+## Error handling
+
+SDK calls do not throw for platform errors — they return a result object with a success flag.
+Check it.
+
+```csharp
+var result = await SusaPlaySDK.Purchases.SpendPlatformWallet("sword_of_fire");
+if (!result.Success)
+{
+    Debug.LogWarning($"Spend failed: {result.ErrorCode} — {result.ErrorMessage}");
+}
+```
+
+If the shell stops responding, requests time out and return an unsuccessful result rather than
+hanging.
+
 ## Key rules
 
-- Call `init` before anything else — it sets up auth and telemetry
-- `spend` operations require an `idempotencyKey` — use a UUID per transaction, never reuse
-- Save writes are versioned — always pass the last-read `version` to prevent conflicts
-- Handle offline state — cache wallet/save data locally and sync on reconnect
+- Await `Initialize()` before touching any module — the properties are null until it completes
+- Never hardcode the game key; it belongs in the `PlatformConfig` asset
+- Call `MarkGameLoaded()` once your first scene is playable, so the shell can hide its loader
+- Currency and inventory are server-authoritative — never track balances client-side as truth
+- Save writes are versioned by the platform; always read before you write in a new session

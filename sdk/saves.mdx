@@ -1,70 +1,74 @@
 ---
 title: "Saves"
-description: "Cloud save read, write, and conflict resolution"
+description: "Cloud save read and write"
 ---
+
+Cloud saves are keyed by slot. Data is an opaque string — serialize it yourself, usually as
+JSON. The platform stores the payload and tracks its version for you.
 
 ## Read
 
-```javascript
-const save = await SusaPlay.saves.read({ slotId: 'main' })
-// Returns null if no save exists yet
-if (save) {
-  loadProgress(save.data)
-  localVersion = save.version
+```csharp
+var loaded = await SusaPlaySDK.CloudSave.Load("main");
+
+if (loaded.success)
+{
+    var state = JsonUtility.FromJson<MyState>(loaded.data.data);
+    Debug.Log($"Loaded version {loaded.data.version}, saved at {loaded.data.savedAt}");
+}
+else
+{
+    // No save in this slot yet — start a fresh game.
 }
 ```
+
+`LoadResult`:
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `success` | `bool` | False when the slot is empty or the read failed |
+| `data.slot` | `string` | Slot name you requested |
+| `data.data` | `string` | Your serialized payload |
+| `data.version` | `int` | Increments on every successful write |
+| `data.savedAt` | `string` | ISO-8601 timestamp |
 
 ## Write
 
-```javascript
-await SusaPlay.saves.write({
-  slotId: 'main',
-  data: { level: 5, coins: 1200 },
-  version: localVersion, // pass 0 for first write
-})
-```
+```csharp
+var payload = JsonUtility.ToJson(myState);
+var saved = await SusaPlaySDK.CloudSave.Save("main", payload);
 
-The server increments `version` on every successful write. Store the returned version locally.
-
-## Conflict resolution
-
-If another session wrote while you were playing, `VERSION_CONFLICT` is thrown:
-
-```javascript
-async function saveWithRetry(slotId, newData) {
-  try {
-    await SusaPlay.saves.write({ slotId, data: newData, version: localVersion })
-  } catch (err) {
-    if (err.code === 'VERSION_CONFLICT') {
-      const server = await SusaPlay.saves.read({ slotId })
-      const merged = mergeData(newData, server.data)
-      await SusaPlay.saves.write({ slotId, data: merged, version: server.version })
-      localVersion = server.version + 1
-    }
-  }
+if (saved.success)
+{
+    Debug.Log($"Now at version {saved.data.version}");
 }
 ```
 
+You do not pass a version. The platform assigns the next one and returns it.
+
 ## Multiple slots
 
-Use slots to isolate concerns:
+Slots are independent — use them to separate concerns that change at different rates.
 
-```javascript
-// Separate slots — no cross-slot version conflict
-await SusaPlay.saves.write({ slotId: 'progress', data: progressData, version: pv })
-await SusaPlay.saves.write({ slotId: 'settings', data: settingsData, version: sv })
+```csharp
+await SusaPlaySDK.CloudSave.Save("progress", progressJson);
+await SusaPlaySDK.CloudSave.Save("settings", settingsJson);
 ```
+
+## Concurrency
+
+Writes are applied inside a server-side transaction, so two sessions writing the same slot
+cannot corrupt each other — the later write wins and gets the higher version.
+
+The SDK does not surface a merge hook. If your game can run in two tabs at once and you need
+last-write-wins to be smarter than that, read before writing and merge in your own code.
 
 ## Limits
 
-- Max 1 MB per slot
-- Slot ID: alphanumeric \+ underscores, max 64 chars
-- No limit on number of slots per player
+- 500 KB per slot
+- Payloads above the limit are rejected server-side
 
-## Error codes
+## When a write fails
 
-| Code | Cause |
-| --- | --- |
-| `VERSION_CONFLICT` | Another session wrote first — re-read and retry |
-| `INVALID_ARGUMENT` | Data exceeds 1 MB or malformed slot ID |
-| `UNAUTHENTICATED` | Player session expired |
+`success` is false. Common causes: payload too large, the player's session expired, or the shell
+stopped responding. Keep the unsaved state in memory and retry rather than discarding progress.

@@ -5,65 +5,85 @@ description: "Persist player progress across devices and sessions"
 
 ## Overview
 
-SusaPlay cloud saves store arbitrary JSON per player per game. Saves are versioned — concurrent writes are rejected to prevent data loss.
+Cloud saves store one payload per slot, per player, per game. The payload is an opaque string —
+serialize your own state into it. The platform versions each write and applies it inside a
+server-side transaction.
 
 ## Write a save
 
-```javascript
-const save = await SusaPlay.saves.read({ slotId: 'main' })
-const currentVersion = save?.version ?? 0
+```csharp
+var payload = JsonUtility.ToJson(new SaveState
+{
+    level = 12,
+    coins = 1200
+});
 
-await SusaPlay.saves.write({
-  slotId: 'main',
-  data: {
-    level: 12,
-    inventory: ['sword', 'shield'],
-    settings: { music: true }
-  },
-  version: currentVersion, // must match server version
-})
+var saved = await SusaPlaySDK.CloudSave.Save("main", payload);
+
+if (saved.success)
+{
+    Debug.Log($"Saved as version {saved.data.version}");
+}
 ```
+
+You do not supply a version. The server assigns the next one and returns it.
 
 ## Read a save
 
-```javascript
-const save = await SusaPlay.saves.read({ slotId: 'main' })
-if (save) {
-  applyProgress(save.data)
-} else {
-  startFreshGame()
+```csharp
+var loaded = await SusaPlaySDK.CloudSave.Load("main");
+
+if (loaded.success)
+{
+    var state = JsonUtility.FromJson<SaveState>(loaded.data.data);
+    ApplyProgress(state);
+}
+else
+{
+    StartFreshGame();
 }
 ```
 
-## Version conflicts
+`success` is false both when the read failed and when the slot has never been written, so treat
+it as "no save yet".
 
-If your `version` doesn't match the server's current version, the write is rejected with `VERSION_CONFLICT`. This means another session wrote first.
+## Serializing state
 
-```javascript
-try {
-  await SusaPlay.saves.write({ slotId: 'main', data, version })
-} catch (err) {
-  if (err.code === 'VERSION_CONFLICT') {
-    // Re-read server version, merge, retry
-    const latest = await SusaPlay.saves.read({ slotId: 'main' })
-    const merged = mergeProgressData(data, latest.data)
-    await SusaPlay.saves.write({ slotId: 'main', data: merged, version: latest.version })
-  }
+Unity's `JsonUtility` only handles serializable fields on concrete classes — no dictionaries, no
+polymorphism. For nested or dynamic state, either flatten it into a serializable class or bring
+your own JSON library.
+
+```csharp
+[System.Serializable]
+public class SaveState
+{
+    public int level;
+    public int coins;
+    public string[] inventory;
 }
 ```
 
-## Slot IDs
+## Multiple slots
 
-Use multiple slots to separate concerns:
+Slots are independent. Use them to separate state that changes at different rates, so a settings
+write cannot clobber progress.
 
-```javascript
-await SusaPlay.saves.write({ slotId: 'progress', data: progressData, version })
-await SusaPlay.saves.write({ slotId: 'settings', data: settingsData, version })
+```csharp
+await SusaPlaySDK.CloudSave.Save("progress", progressJson);
+await SusaPlaySDK.CloudSave.Save("settings", settingsJson);
 ```
+
+## Concurrency
+
+Two sessions writing the same slot cannot corrupt each other — writes are transactional and the
+later one wins with a higher version.
+
+The SDK has no merge callback. If your game can realistically run in two tabs at once and
+last-write-wins is not acceptable, read immediately before writing and merge in your own code.
 
 ## Rules
 
-- Always read before write — never hardcode `version: 0` after initial setup
-- Keep save data under 1 MB per slot
-- Don't store sensitive data (payment info, auth tokens) in saves
-- Handle offline gracefully — cache locally and sync when reconnected
+- Keep each slot under 500 KB
+- Never store payment details or auth tokens in a save
+- Save at natural checkpoints, not every frame — each write is a network round trip
+- Keep unsaved state in memory when a write fails, and retry rather than dropping progress

@@ -7,17 +7,8 @@
     "light": "#9B6FF5",
     "dark": "#4B1FA8"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.png",
   "navigation": {
-    "pages": [
-      {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
-        ]
-      }
-    ],
     "groups": [
       {
         "group": "Getting Started",
@@ -29,7 +20,6 @@
       {
         "group": "Integration",
         "pages": [
-          "integration/quickstart",
           "integration/register-game",
           "integration/api-keys",
           "integration/sdk",
@@ -38,16 +28,6 @@
           "integration/webhooks",
           "integration/builds",
           "integration/release-review"
-        ]
-      },
-      {
-        "group": "LiveOps",
-        "pages": [
-          "liveops/overview",
-          "liveops/client-integration",
-          "liveops/developer-guide",
-          "liveops/admin-guide",
-          "liveops/payload-reference"
         ]
       },
       {
@@ -61,20 +41,16 @@
         ]
       },
       {
-        "group": "Platform",
+        "group": "API",
         "pages": [
-          "platform/api-contract",
-          "platform/architecture",
-          "platform/data-model",
-          "platform/infrastructure",
-          "platform/security"
+          "api/reference"
         ]
       }
     ]
   },
   "logo": {
     "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "dark": "/logo/dark.png"
   },
   "navbar": {
     "links": [
@@ -102,7 +78,6 @@
     ]
   },
   "footer": {
-    "socials": {
-    }
+    "socials": {}
   }
 }

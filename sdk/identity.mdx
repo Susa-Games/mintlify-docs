@@ -1,70 +1,65 @@
 ---
 title: "Identity"
-description: "Player authentication, guest sessions, and account management"
+description: "Reading the current player and handling guest sessions"
 ---
 
-## Initialize
+Identity is resolved by the SusaPlay shell before your game starts. There is no login flow to
+build and no identity call to make — by the time `Initialize()` returns, the player is known.
 
-```javascript
-const player = await SusaPlay.identity.init()
-// Returns: { uid, isGuest, displayName, createdAt }
+## Reading the current player
+
+```csharp
+await SusaPlaySDK.Initialize();
+
+string uid = SusaPlaySDK.Auth.Uid;
+string name = SusaPlaySDK.Auth.DisplayName;
 ```
 
-Call this after `SusaPlay.init()`. It creates or resumes a player session.
+| Property | Type | Notes |
+| --- | --- | --- |
+| `Uid` | `string` | Platform player id. Stable for signed-in players. |
+| `DisplayName` | `string` | May be empty for guests. |
+| `IsGuest` | `bool` | True when the player has not signed in. |
+| `IsAuthenticated` | `bool` | True when the player has an account. |
+
+All four are null or false before `Initialize()` completes.
 
 ## Guest sessions
 
-No account required — players can start immediately:
+Players can start without an account. The shell issues a guest session automatically.
 
-```javascript
-const guest = await SusaPlay.identity.initGuest()
-console.log(guest.uid)      // temporary uid
-console.log(guest.isGuest)  // true
+```csharp
+if (SusaPlaySDK.Auth.IsGuest)
+{
+    // Offer a "sign in to keep your progress" prompt at a natural break —
+    // guest progress is tied to the browser and can be lost.
+}
 ```
 
-Guest data persists on-device. Merge to a real account when the player signs up.
+Guests can use the wallet, saves, and analytics exactly like signed-in players.
 
-## Merge guest to account
+## Account merge
 
-After a player creates an account or logs in:
+When a guest signs in, the platform links their existing progress to the new account. This is
+handled entirely by the shell — your game does not orchestrate it and does not need to migrate
+anything.
 
-```javascript
-const guestToken = await SusaPlay.identity.getGuestToken()
-// ... player authenticates with your auth system ...
-const authToken = await yourAuth.getToken()
+`Uid` can change across sessions for a guest who later signs in. Never persist a uid in your own
+backend as a permanent key without also handling that transition.
 
-await SusaPlay.identity.mergeGuest(guestToken, authToken)
-// Guest progress (wallet, saves) is now linked to the real account
+## Authentication tokens
+
+The SDK attaches the player's auth token to every platform request for you. There is no
+`getIdToken` in the Unity SDK, and a game should not need one.
+
+If your game calls **your own** backend, use `SusaPlaySDK.Api` — it signs those requests with the
+player's identity so your server can verify who is calling:
+
+```csharp
+var result = await SusaPlaySDK.Api.Get("/my-endpoint");
 ```
 
-## Get current player
-
-```javascript
-const player = SusaPlay.identity.currentPlayer
-// null if not initialized
-```
-
-## Sign out
-
-```javascript
-await SusaPlay.identity.signOut()
-```
-
-Clears local session. Next `init()` call will create a new guest session.
-
-## Claims and roles
-
-Player tokens include custom claims set by the platform. You can read them:
-
-```javascript
-const token = await SusaPlay.identity.getIdToken()
-// Decode JWT to read claims — don't trust client-side, verify server-side
-```
-
-## Error codes
-
-| Code | Cause |
-| --- | --- |
-| `UNAUTHENTICATED` | Session expired or missing |
-| `INVALID_ARGUMENT` | Malformed guest token |
-| `NOT_FOUND` | Player account does not exist |
+<Warning>
+Never trust a player id sent from the client. Verify it server-side on every request that grants
+anything.
+</Warning>

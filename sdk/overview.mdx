@@ -1,16 +1,23 @@
 ---
 title: "SDK Overview"
-description: "SusaPlay SDK — available platforms and version requirements"
+description: "SusaPlay SDK — installation, modules, and initialization"
 ---
 
 ## Available SDKs
 
 | Platform | Package | Min version |
 | --- | --- | --- |
-| Unity (C#) | `com.susaplay.sdk` via UPM | Unity 2021.3\+ |
-| JavaScript / TypeScript | `@susaplay/sdk` via npm | Node 18\+ |
+| Unity (C#) | `com.susaplay.sdk` via UPM | Unity 2021.3+ |
 
-## Unity installation
+<Note>
+Unity is the only SDK today. There is no JavaScript or TypeScript package.
+</Note>
+
+Games run as WebGL builds inside the SusaPlay shell. The SDK communicates with the platform
+through that shell rather than calling the API directly, so the same code works in production
+and in the developer preview.
+
+## Installation
 
 Add to `Packages/manifest.json`:
 
@@ -22,46 +29,62 @@ Add to `Packages/manifest.json`:
 }
 ```
 
-Or via Unity Package Manager → Add package from git URL:
+Or in Unity Package Manager → **Add package from git URL**:
 
 ```text
 https://github.com/susaplay/com.susaplay.sdk.git
 ```
 
-## JavaScript installation
+Then run **susaplay → Create Config Asset** and fill in your game key.
 
-```bash
-npm install @susaplay/sdk
-```
+## Modules
 
-## SDK modules
+Every module hangs off the static `SusaPlaySDK` class and is populated by `Initialize()`.
 
-| Module | What it does |
+| Property | What it does |
 | --- | --- |
-| `identity` | Player authentication, guest sessions, account merge |
-| `economy` | Wallet, spend, IAP validation, store catalog |
-| `saves` | Versioned cloud save read/write |
-| `analytics` | Session tracking, custom events |
+| `SusaPlaySDK.Auth` | Current player — uid, display name, guest flag |
+| `SusaPlaySDK.Purchases` | Platform wallet, store catalogue, real-money checkout |
+| `SusaPlaySDK.CloudSave` | Versioned cloud save read and write |
+| `SusaPlaySDK.Analytics` | Custom events |
+| `SusaPlaySDK.Webhooks` | Server-to-server events for your own backend |
+| `SusaPlaySDK.Api` | Authenticated calls to your own partner API |
+| `SusaPlaySDK.LiveOps` | Campaign and offer content |
 
-## Initialization order
+## Initialization
 
-Always initialize before using any module:
+One call sets up everything. Identity is resolved by the shell during the handshake, so there
+is no separate identity step.
 
-```javascript
-// 1. Init SDK
-await SusaPlay.init({ gameKey: 'gk_xxxx' })
+```csharp
+using susaplay.SDK;
+using UnityEngine;
 
-// 2. Init identity (required before economy/saves)
-const player = await SusaPlay.identity.init()
+public class Bootstrap : MonoBehaviour
+{
+    private async void Start()
+    {
+        await SusaPlaySDK.Initialize();
 
-// 3. Now safe to use other modules
-const wallet = await SusaPlay.economy.getWallet()
+        // Every module is ready from here on.
+        var wallet = await SusaPlaySDK.Purchases.GetPlatformWallet();
+
+        SusaPlaySDK.MarkGameLoaded();
+    }
+}
 ```
+
+<Warning>
+Await `Initialize()` before touching any module. The properties are null until it completes,
+and a second call while the first is still running is ignored.
+</Warning>
+
+If the shell does not respond within 15 seconds, initialization logs an error and gives up.
+Guard against null modules if your game can run standalone.
 
 ## Version
 
-Check the installed version:
+The SDK reports its version to the shell during the handshake. Current release: **1.3.0**.
 
-```javascript
-console.log(SusaPlay.version) // e.g. "1.4.2"
-```
+Some behaviour is version-gated — `session_start` analytics requires 1.3.0 or later. Rebuild
+your game after upgrading the package; the version is compiled into the WebGL build.
