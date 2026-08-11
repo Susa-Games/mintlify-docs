@@ -1,0 +1,78 @@
+---
+title: "Architecture"
+description: "Modular monolith on Firebase — domain boundaries and system overview"
+---
+
+## Pattern
+
+Modular monolith on Firebase. Everything deploys to one project, but the codebase is divided into strict domain boundaries. Modules communicate through defined interfaces — no module reaches into another's Firestore collections directly.
+
+The seams between modules are designed so any one can be extracted to Cloud Run later without rewriting the rest.
+
+## System overview
+
+```text
+CLIENT LAYER
+  player-portal    (susaplay.com)
+  game-shell       (play.susaplay.com)
+  developer-portal (dev.susaplay.com)
+  admin-panel      (admin.susaplay.com)
+        │
+        ▼
+  FIREBASE AUTH  ──  ID Token (JWT)
+        │
+        ▼
+  CLOUD FUNCTIONS (Python 3.12, europe-west1)
+    /identity    /catalog    /economy
+    /engagement  /analytics  /platform
+    /liveops     serveGame
+        │
+   ┌────┴────┐
+Firestore   BigQuery
+(live DB)   (analytics)
+```
+
+## Frontend apps
+
+| App | URL | Stack |
+| --- | --- | --- |
+| Player portal | susaplay.com | React \+ Vite \+ TypeScript |
+| Game shell | play.susaplay.com | React \+ Vite |
+| Developer portal | dev.susaplay.com | React \+ Vite |
+| Admin panel | admin.susaplay.com | React \+ Vite |
+
+## Backend domains
+
+| Domain | Owns |
+| --- | --- |
+| `identity` | Auth, player profiles, sessions |
+| `catalog` | Game registration, builds, versioning |
+| `economy` | Wallet, purchases, IAP validation, inventory |
+| `engagement` | Leaderboards, achievements |
+| `analytics` | Event ingestion → BigQuery |
+| `platform` | Admin ops: roles, game review, partners |
+| `liveops` | Campaign management, static JSON delivery |
+| `serveGame` | WebGL serving, addressables, CDN |
+
+## Data flow
+
+- Player requests → Firebase Auth → Cloud Function → Firestore
+- Analytics events → Cloud Function → BigQuery (async, fire-and-forget)
+- LiveOps publish → Cloud Function → Firebase Storage (static JSON)
+- Game builds → Cloud Function → Firebase Storage
+
+## SDK paths
+
+- **Unity/mobile:** Firebase SDK native integration
+- **WebGL:** REST API \+ postMessage bridge
+
+## Monorepo layout
+
+```text
+susaplay_backend/
+  apps/           # Frontend apps (Vite + React)
+  packages/       # Shared types, UI, Firebase config
+  backend/        # Python Cloud Functions
+  cloudflare/     # Edge workers for game assets
+  mintlify-docs/  # This docs site
+```

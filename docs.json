@@ -1,0 +1,108 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "SusaPlay Docs",
+  "colors": {
+    "primary": "#6C3CE1",
+    "light": "#9B6FF5",
+    "dark": "#4B1FA8"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "pages": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "index",
+          "quickstart"
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "index",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Integration",
+        "pages": [
+          "integration/quickstart",
+          "integration/register-game",
+          "integration/api-keys",
+          "integration/sdk",
+          "integration/economy",
+          "integration/saves",
+          "integration/webhooks",
+          "integration/builds",
+          "integration/release-review"
+        ]
+      },
+      {
+        "group": "LiveOps",
+        "pages": [
+          "liveops/overview",
+          "liveops/client-integration",
+          "liveops/developer-guide",
+          "liveops/admin-guide",
+          "liveops/payload-reference"
+        ]
+      },
+      {
+        "group": "SDK",
+        "pages": [
+          "sdk/overview",
+          "sdk/identity",
+          "sdk/economy",
+          "sdk/saves",
+          "sdk/analytics"
+        ]
+      },
+      {
+        "group": "Platform",
+        "pages": [
+          "platform/api-contract",
+          "platform/architecture",
+          "platform/data-model",
+          "platform/infrastructure",
+          "platform/security"
+        ]
+      }
+    ]
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:support@susaplay.com"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Developer Portal",
+      "href": "https://dev.susaplay.com"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "footer": {
+    "socials": {
+    }
+  }
+}

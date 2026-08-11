@@ -1,0 +1,55 @@
+---
+title: "Register a Game"
+description: "Create your game entry and get credentials"
+---
+
+## Overview
+
+Every game on SusaPlay has a game entry that holds metadata, build history, economy config, and credentials. You register once — then all SDK and API calls reference that game.
+
+## Steps
+
+### 1. Open the Developer Portal
+
+Go to [dev.susaplay.com](https://dev.susaplay.com) → **Register Game**.
+
+### 2. Fill in game metadata
+
+| Field | Notes |
+| --- | --- |
+| Name | Public-facing title shown in the developer catalog |
+| Description | Summary for reviewers — mention gameplay loop and target audience |
+| Platforms | Select every platform you plan to support (WebGL, iOS, Android) |
+| Genre | Used for internal filtering — pick the closest fit |
+| Distribution | `Public` or `B2B` — determines who can access the game shell |
+
+### 3. Copy the game key
+
+After registration, a game key is generated:
+
+```text
+gk_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+<Warning>
+  Copy this immediately. It is shown only once. If you lose it, generate a new key from Settings → API Keys.
+</Warning>
+
+### 4. Add thumbnail and screenshots
+
+Before requesting release review:
+
+- Upload a thumbnail (JPEG, PNG, or WebP, under 5 MB)
+- Add up to 3 screenshots showing real gameplay
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="API Keys" icon="key" href="/integration/api-keys">
+    Keep credentials scoped correctly
+  </Card>
+
+  <Card title="SDK Integration" icon="code" href="/integration/sdk">
+    Initialize the SDK with your game key
+  </Card>
+</CardGroup>

@@ -1,0 +1,71 @@
+---
+title: "Webhooks"
+description: "Receive real-time platform events on your backend server"
+---
+
+## Overview
+
+Webhooks deliver platform events (builds going live, purchases, analytics) to your backend via HTTP POST. Your server must respond within 10 seconds.
+
+## Create a webhook endpoint
+
+Developer Portal → your game → **Webhooks → Add Endpoint**
+
+| Field | Notes |
+| --- | --- |
+| URL | Your HTTPS endpoint — must be publicly reachable |
+| Secret | Used to sign requests — store securely, never commit |
+| Events | Select which events to receive |
+
+## Available events
+
+| Event | Triggered when |
+| --- | --- |
+| `BUILD_RECEIVED` | Build upload completed |
+| `BUILD_LIVE` | Build approved and set live |
+| `BUILD_DEPRECATED` | Build replaced by a newer live version |
+| `IAP_VALIDATED` | Purchase receipt validated |
+| `SDK_ANALYTICS_EVENT` | Player analytics event fired |
+| `CUSTOM_WEBHOOK_EVENT` | B2B partner event |
+
+## Verify signatures
+
+Every request includes a `SusaPlay-Signature` header. **Always verify it before processing.**
+
+```javascript
+import crypto from 'crypto'
+
+function verifySignature(req, secret) {
+  const signature = req.headers['susaplay-signature']
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(req.body) // raw body string, not parsed JSON
+    .digest('hex')
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expected)
+  )
+}
+
+app.post('/webhook', express.raw({ type: '*/*' }), (req, res) => {
+  if (!verifySignature(req, process.env.WEBHOOK_SECRET)) {
+    return res.status(401).end()
+  }
+  res.sendStatus(200)            // respond fast
+  processAsync(req.body.toString()) // heavy work after
+})
+```
+
+<Warning>
+  Parse the raw body for signature verification — never verify against a pre-parsed JSON object.
+</Warning>
+
+## Reliability rules
+
+- **Return 200 within 10 seconds.** Queue heavy processing async.
+- **Be idempotent.** The same event may be delivered more than once.
+- **Log failed deliveries.** Use the test-webhook button in the portal to debug.
+
+## Test a webhook
+
+Developer Portal → Webhooks → select endpoint → **Send Test Event**. Inspect the delivery log for status code, response time, and response body.

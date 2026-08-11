@@ -1,0 +1,61 @@
+---
+title: "Economy Config"
+description: "Define currencies, store items, and purchase metadata"
+---
+
+## Overview
+
+Economy config is developer-owned metadata stored per game. It defines:
+
+- **Currencies** — virtual currencies players earn and spend
+- **Store items** — purchasable items with pricing and IAP product ID mappings
+
+Changes take effect immediately — no release needed.
+
+## Currencies
+
+Configure at Developer Portal → your game → **Economy → Currencies**.
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| ID | Yes | Stable identifier — clients and analytics reference this |
+| Name | Yes | Display name shown to players |
+| Icon URL | No | CDN URL for currency icon |
+| Max balance | No | Cap to prevent exploits |
+
+<Warning>
+  Currency IDs must be stable. Changing an ID after launch breaks client references and analytics.
+</Warning>
+
+**Built-in currencies:** `coins` and `gems` are always available — no configuration needed.
+
+```javascript
+// Example stable IDs
+{ id: 'diamonds', name: 'Diamonds' }   // Good
+{ id: 'currency_1', name: 'Diamonds' } // Bad — may change
+```
+
+## Store items
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| ID | Yes | Stable item identifier |
+| Name | Yes | Display name |
+| Type | Yes | `durable` (owned forever) or `consumable` (used once) |
+| Price currency | Yes | Must match a configured currency ID |
+| Price amount | Yes | Cost in that currency |
+| iOS product ID | No | Must match App Store product ID exactly |
+| Android product ID | No | Must match Play Store SKU exactly |
+| Xsolla SKU | No | If using Xsolla payment integration |
+
+**IAP product IDs are case-sensitive.** `com.game.Pack1` ≠ `com.game.pack1`.
+
+## After changes
+
+Retest:
+
+- Purchase flows (IAP \+ wallet)
+- Reward flows (ads, achievements)
+- Balance display in-game
+
+Economy changes are live immediately — broken config reaches players instantly.

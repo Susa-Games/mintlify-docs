@@ -1,0 +1,47 @@
+---
+title: "Release Review"
+description: "Pass review with a clean submission the first time"
+---
+
+## What reviewers check
+
+- All functional flows work from a cold start with a fresh player account
+- Economy flows (purchases, rewards, wallet) match the economy config
+- IAP product IDs match App Store / Play Store configuration
+- No crashes on the target platforms
+- Build structure is correct (WebGL: `index.html` at root)
+
+## How to prepare
+
+**Test with a fresh account.** Reviewers create new player accounts — don't rely on pre-seeded dev data.
+
+**Test every economy flow end to end:**
+
+```text
+Register player → open wallet → buy item → verify inventory
+Watch ad → verify reward credited
+```
+
+**Check your release notes include:**
+
+- What changed
+- How to reach all new features
+- Test credentials if any flow requires a specific account state
+
+## Common rejection reasons
+
+| Reason | Fix |
+| --- | --- |
+| Black screen on load | Check WebGL build structure — `index.html` at root |
+| Purchases not working | Verify IAP product IDs match store config exactly |
+| Auth loop | Test with fresh account, not dev account |
+| Missing screenshots | Add at least one screenshot before submitting |
+| Broken on mobile | Test on actual device, not just desktop browser |
+
+## After rejection
+
+Review the rejection notes in the portal. Fix the issue, upload a new build version, and resubmit. You don't need to re-register the game.
+
+## After approval
+
+The build is approved but not yet live. A SusaPlay admin sets it live — you'll receive a webhook event `BUILD_LIVE` when players can access it.

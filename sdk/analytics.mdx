@@ -1,0 +1,56 @@
+---
+title: "Analytics"
+description: "Session tracking and custom events"
+---
+
+## Session
+
+A session starts automatically when identity is initialized. Track session end explicitly:
+
+```javascript
+// On game close / pause
+await SusaPlay.analytics.sessionEnd({
+  sessionId: currentSessionId,
+  durationSeconds: elapsed,
+})
+```
+
+## Custom events
+
+```javascript
+await SusaPlay.analytics.track({
+  name: 'level_start',
+  params: {
+    levelId: 'world_2_level_3',
+    difficulty: 'hard',
+    attempt: 2,
+  },
+})
+```
+
+Events are batched and flushed automatically. Fire-and-forget — don't await in hot paths.
+
+## Standard events
+
+These are tracked automatically by the SDK:
+
+| Event | When |
+| --- | --- |
+| `session_start` | On `identity.init()` |
+| `session_end` | On `analytics.sessionEnd()` |
+| `iap_purchase` | On successful `economy.validatePurchase()` |
+| `ad_reward` | On completed ad reward |
+
+## Viewing data
+
+Analytics are available in:
+
+- Developer Portal → your game → **Analytics** (session DAU, revenue, retention)
+- BigQuery — for raw event queries (contact SusaPlay to enable)
+
+## Event naming rules
+
+- Snake\_case only: `level_start` not `LevelStart`
+- Max 40 characters
+- No PII (no email, name, phone)
+- Max 25 custom params per event

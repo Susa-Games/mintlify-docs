@@ -1,0 +1,70 @@
+---
+title: "Economy"
+description: "Wallet, spend, IAP validation, and store catalog"
+---
+
+## Get wallet
+
+```javascript
+const wallet = await SusaPlay.economy.getWallet()
+// Returns: { gameId, balances: { diamonds: 500, coins: 1200 } }
+```
+
+## Spend currency
+
+```javascript
+await SusaPlay.economy.spend({
+  gameId: 'your-game-id',
+  currency: 'diamonds',
+  amount: 100,
+  itemId: 'sword_of_fire',
+  idempotencyKey: crypto.randomUUID(), // unique per transaction
+})
+```
+
+<Warning>
+  Always pass a unique `idempotencyKey` per transaction. Reusing a key on retry is safe — the server will deduplicate. Never hardcode the same key.
+</Warning>
+
+## Validate IAP purchase
+
+```javascript
+// iOS
+await SusaPlay.economy.validatePurchase({
+  platform: 'ios',
+  productId: 'com.game.pack1',
+  receipt: appleTransactionReceipt,
+})
+
+// Android
+await SusaPlay.economy.validatePurchase({
+  platform: 'android',
+  productId: 'com.game.pack1',
+  purchaseToken: googlePurchaseToken,
+})
+```
+
+On success, the associated rewards are credited to the player's wallet.
+
+## Get store catalog
+
+```javascript
+const catalog = await SusaPlay.economy.getCatalog()
+// Returns items from economy config: id, name, price, type
+```
+
+## Get inventory
+
+```javascript
+const inventory = await SusaPlay.economy.getInventory()
+// Returns: { items: [{ itemId, quantity, unlockedAt }] }
+```
+
+## Error codes
+
+| Code | Cause |
+| --- | --- |
+| `INSUFFICIENT_BALANCE` | Not enough currency to spend |
+| `DUPLICATE_PURCHASE` | Receipt already validated |
+| `INVALID_RECEIPT` | Apple/Google rejected the receipt |
+| `GAME_NOT_FOUND` | Game key doesn't match active game |

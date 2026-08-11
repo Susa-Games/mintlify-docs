@@ -1,0 +1,58 @@
+---
+title: "Admin Guide"
+description: "Activating subscriptions, creating campaigns, and publishing"
+---
+
+<Note>
+  This guide is for the SusaPlay operations team. Game developers should refer to the [Developer Guide](/liveops/developer-guide).
+</Note>
+
+## Step 1 — Activate a subscription
+
+Admin Panel → **Live Ops → Subscriptions** → **Activate for New Game**
+
+| Field | What to set |
+| --- | --- |
+| Game | Select from registered games |
+| Target Markets | ISO codes or `GLOBAL` |
+| IAP Ladder | JSON: pack ID → USD price |
+| Mission Catalog | Valid `missionID` values |
+| Developer Approval Required | ON if developer must review before publish |
+
+## Step 2 — Create a campaign
+
+Admin Panel → **Live Ops → Campaigns** → **New Campaign**
+
+- Set **Campaign Name** (internal label, not shown to players)
+- Choose **Campaign Type** — see [Payload Reference](/liveops/payload-reference)
+- Set **Start / End Date** (ISO 8601)
+- Set **Region Tags** (`GLOBAL` or specific countries)
+- Edit **Payload JSON** — must include type-specific required fields
+- Upload banner image if needed
+
+## Step 3 — Submit
+
+Click **Submit to Developer**.
+
+- If **Developer Approval Required** is ON → status becomes `pending_developer`, developer gets email
+- If OFF → status becomes `approved` immediately
+
+## Step 4 — Publish
+
+Once status is `approved`, go to **Live Ops → Publishing** → click **Publish**.
+
+This writes `liveops.json` and `discountoffers.json` to Firebase Storage. Game clients see the update within 15 minutes (CDN cache TTL).
+
+## Rollback
+
+If a campaign causes issues, go to **Publishing → Rollback** to restore a previous snapshot.
+
+## Campaign status machine
+
+```text
+draft → pending_developer → approved → live → expired
+         ↓                   ↑
+         change_requested ───┘
+         
+rejected (terminal)
+```

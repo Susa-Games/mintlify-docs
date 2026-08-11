@@ -1,0 +1,70 @@
+---
+title: "Identity"
+description: "Player authentication, guest sessions, and account management"
+---
+
+## Initialize
+
+```javascript
+const player = await SusaPlay.identity.init()
+// Returns: { uid, isGuest, displayName, createdAt }
+```
+
+Call this after `SusaPlay.init()`. It creates or resumes a player session.
+
+## Guest sessions
+
+No account required — players can start immediately:
+
+```javascript
+const guest = await SusaPlay.identity.initGuest()
+console.log(guest.uid)      // temporary uid
+console.log(guest.isGuest)  // true
+```
+
+Guest data persists on-device. Merge to a real account when the player signs up.
+
+## Merge guest to account
+
+After a player creates an account or logs in:
+
+```javascript
+const guestToken = await SusaPlay.identity.getGuestToken()
+// ... player authenticates with your auth system ...
+const authToken = await yourAuth.getToken()
+
+await SusaPlay.identity.mergeGuest(guestToken, authToken)
+// Guest progress (wallet, saves) is now linked to the real account
+```
+
+## Get current player
+
+```javascript
+const player = SusaPlay.identity.currentPlayer
+// null if not initialized
+```
+
+## Sign out
+
+```javascript
+await SusaPlay.identity.signOut()
+```
+
+Clears local session. Next `init()` call will create a new guest session.
+
+## Claims and roles
+
+Player tokens include custom claims set by the platform. You can read them:
+
+```javascript
+const token = await SusaPlay.identity.getIdToken()
+// Decode JWT to read claims — don't trust client-side, verify server-side
+```
+
+## Error codes
+
+| Code | Cause |
+| --- | --- |
+| `UNAUTHENTICATED` | Session expired or missing |
+| `INVALID_ARGUMENT` | Malformed guest token |
+| `NOT_FOUND` | Player account does not exist |

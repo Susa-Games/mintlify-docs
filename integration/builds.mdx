@@ -1,0 +1,63 @@
+---
+title: "Build Uploads"
+description: "Submit playable builds for review and version tracking"
+---
+
+## WebGL build structure
+
+Zip must have `index.html` at the root:
+
+```text
+your-build.zip
+├── index.html          ← required at root
+├── Build/
+│   ├── game.wasm
+│   ├── game.data
+│   └── game.framework.js
+└── TemplateData/
+```
+
+<Warning>
+  Nested zips (a zip inside a zip) are rejected. If Unity exports to a subfolder, flatten it before uploading.
+</Warning>
+
+## Upload via Developer Portal
+
+1. Developer Portal → your game → **Builds → Upload Build**
+2. Select platform (WebGL, iOS, Android)
+3. Set version ID — use semantic versioning (`1.0.0`) or dates (`2026-08-01`)
+4. Add release notes — describe what changed and how to test
+5. Upload zip
+
+## Upload via CI/CD
+
+Use the developer API key:
+
+```bash
+curl -X POST https://api.susaplay.com/catalog/publish \
+  -H "Authorization: ApiKey $DEVELOPER_API_KEY" \
+  -F "gameId=$GAME_ID" \
+  -F "versionId=$VERSION" \
+  -F "platform=webgl" \
+  -F "notes=Build $CI_COMMIT_SHA" \
+  -F "build=@./dist/game.zip"
+```
+
+## Version states
+
+| State | Meaning |
+| --- | --- |
+| `pending_review` | Submitted, awaiting review |
+| `approved` | Reviewed — can be set live |
+| `live` | Currently served to players |
+| `deprecated` | Replaced by a newer live version |
+| `rejected` | Failed review — fix issues and resubmit |
+
+## Release notes checklist
+
+Good release notes help reviewers pass builds faster:
+
+- What changed since last version
+- Known issues or workarounds
+- Test account credentials if auth is required
+- Which platforms were tested

@@ -1,0 +1,69 @@
+---
+title: "Security"
+description: "Auth model, data access rules, and key handling"
+---
+
+## Authentication model
+
+All API calls require a Firebase ID token. The token is verified server-side on every request — never trust the client.
+
+```text
+Client → Firebase Auth → ID Token (JWT, 1 hour TTL)
+     → Cloud Function → verify_id_token() → decoded claims
+```
+
+Custom claims encode roles (`admin`, `developer`, `player`). Every sensitive endpoint checks the role before processing.
+
+## Firestore rules
+
+All collections are locked — no client reads or writes directly to Firestore. Everything goes through Cloud Functions with the Admin SDK.
+
+```javascript
+// All collections default to deny
+match /{document=**} {
+  allow read, write: if false;
+}
+```
+
+## Economy security
+
+- Wallet operations are server-side only — clients never write to wallet or inventory
+- All spend operations use Firestore transactions for atomicity
+- IAP receipts are validated against Apple/Google APIs server-side before any reward is credited
+- Idempotency keys prevent duplicate reward claims
+
+## API keys
+
+| Key type | Scope | Storage |
+| --- | --- | --- |
+| Game key | SDK init — read-only game operations | Client binary / env |
+| Developer API key | Build uploads via CI/CD | Pipeline secrets — never in code |
+| Partner key | B2B game launch | Partner backend only |
+| Admin credentials | Admin panel | Never in client code |
+
+## Webhook signatures
+
+Every webhook delivery is signed with HMAC-SHA256. Verify on your server:
+
+```javascript
+const sig = req.headers['susaplay-signature']
+const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
+if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+  return res.status(401).end()
+}
+```
+
+## Secret storage
+
+Secrets (Resend API key, Xsolla credentials, webhook secrets) are stored in Google Cloud Secret Manager. Functions fetch them at runtime — never hardcoded, never in environment variables in the codebase.
+
+## CORS
+
+Origins are allowlisted per environment. Unknown origins receive a CORS error without any data.
+
+## Audit log
+
+All admin and developer operations are logged to:
+
+- Firestore `audit_log` (queryable from admin panel)
+- Cloud Logging `susaplay.audit` log (exported to BigQuery via log sink)

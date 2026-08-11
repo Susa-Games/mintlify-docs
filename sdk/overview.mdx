@@ -1,0 +1,67 @@
+---
+title: "SDK Overview"
+description: "SusaPlay SDK — available platforms and version requirements"
+---
+
+## Available SDKs
+
+| Platform | Package | Min version |
+| --- | --- | --- |
+| Unity (C#) | `com.susaplay.sdk` via UPM | Unity 2021.3\+ |
+| JavaScript / TypeScript | `@susaplay/sdk` via npm | Node 18\+ |
+
+## Unity installation
+
+Add to `Packages/manifest.json`:
+
+```json
+{
+  "dependencies": {
+    "com.susaplay.sdk": "https://github.com/susaplay/com.susaplay.sdk.git"
+  }
+}
+```
+
+Or via Unity Package Manager → Add package from git URL:
+
+```text
+https://github.com/susaplay/com.susaplay.sdk.git
+```
+
+## JavaScript installation
+
+```bash
+npm install @susaplay/sdk
+```
+
+## SDK modules
+
+| Module | What it does |
+| --- | --- |
+| `identity` | Player authentication, guest sessions, account merge |
+| `economy` | Wallet, spend, IAP validation, store catalog |
+| `saves` | Versioned cloud save read/write |
+| `analytics` | Session tracking, custom events |
+
+## Initialization order
+
+Always initialize before using any module:
+
+```javascript
+// 1. Init SDK
+await SusaPlay.init({ gameKey: 'gk_xxxx' })
+
+// 2. Init identity (required before economy/saves)
+const player = await SusaPlay.identity.init()
+
+// 3. Now safe to use other modules
+const wallet = await SusaPlay.economy.getWallet()
+```
+
+## Version
+
+Check the installed version:
+
+```javascript
+console.log(SusaPlay.version) // e.g. "1.4.2"
+```

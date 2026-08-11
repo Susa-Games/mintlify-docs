@@ -1,0 +1,62 @@
+---
+title: "Infrastructure"
+description: "Firebase, Cloudflare, and deployment configuration"
+---
+
+## Firebase projects
+
+| Project | Purpose | URL |
+| --- | --- | --- |
+| `susaplay-2e8e3` | Production | susaplay.com |
+| `susaplaytest` | Staging | susaplay-player-staging.web.app |
+
+## Cloud Functions
+
+- Runtime: Python 3.12, 2nd Gen
+- Region: `europe-west1` for all functions
+- Memory: 256–1024 MB depending on function (catalog = 1 GB for build processing)
+
+## Firestore
+
+- Region: `europe-west1`
+- All collections locked to Cloud Functions via Admin SDK — no client direct writes
+- Composite indexes in `firestore.indexes.json`
+
+## Firebase Storage
+
+- Game builds: `games/{gameId}/builds/`
+- Game assets: `games/{gameId}/assets/`
+- LiveOps JSON: `liveops/{gameId}/liveops.json`, `liveops/{gameId}/discountoffers.json`
+- Cache-Control on LiveOps files: `public, max-age=900`
+
+## Cloudflare
+
+- Workers serve game assets from `games.susaplay.com`
+- R2 bucket for game build CDN (zero egress cost)
+- Workers KV for per-game config caching
+
+## Firebase Hosting
+
+| Target | Domain |
+| --- | --- |
+| `susaplay-player` | susaplay.com |
+| `susaplay-shell` | play.susaplay.com |
+| `susaplay-dev` | dev.susaplay.com |
+| `susaplay-admin` | admin.susaplay.com |
+| `susaplay-api` | api.susaplay.com |
+| `susaplay-games` | games.susaplay.com |
+
+## Scheduled jobs
+
+| Job | Schedule | What it does |
+| --- | --- | --- |
+| `expire_liveops_campaigns` | Every 60 min | Marks past-endDate live campaigns as expired, regenerates static JSON |
+
+## CI/CD
+
+Bitbucket Pipelines — selective deploy on merge:
+
+- Merge to `develop` → deploy to staging (`susaplaytest`)
+- Merge to `main` → deploy to production (`susaplay-2e8e3`)
+
+Only changed components deploy (functions, hosting targets, rules/indexes checked independently).

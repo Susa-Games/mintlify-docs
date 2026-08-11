@@ -1,0 +1,112 @@
+---
+title: "SDK Integration"
+description: "Wire identity, saves, economy, and analytics into your game"
+---
+
+## Install
+
+<Tabs>
+  <Tab title="Unity (UPM)">
+    Add to your `Packages/manifest.json`:
+
+    ```json
+    {
+      "dependencies": {
+        "com.susaplay.sdk": "https://github.com/susaplay/com.susaplay.sdk.git"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="JavaScript">
+    ```bash
+    npm install @susaplay/sdk
+    ```
+  </Tab>
+</Tabs>
+
+## Initialize
+
+Call `init` once on startup, before any other SDK calls:
+
+```javascript
+import { SusaPlay } from '@susaplay/sdk'
+
+await SusaPlay.init({
+  gameKey: process.env.VITE_GAME_KEY,
+})
+
+const player = await SusaPlay.identity.init()
+console.log('Player ID:', player.uid)
+```
+
+## Identity
+
+```javascript
+// Authenticated player
+const player = await SusaPlay.identity.init()
+
+// Guest session (no account required)
+const guest = await SusaPlay.identity.initGuest()
+
+// Merge guest → authenticated after login
+await SusaPlay.identity.mergeGuest(guestToken, authToken)
+```
+
+## Economy
+
+```javascript
+// Read wallet
+const wallet = await SusaPlay.economy.getWallet()
+
+// Spend currency
+await SusaPlay.economy.spend({
+  currency: 'diamonds',
+  amount: 100,
+  itemId: 'sword_of_fire',
+  idempotencyKey: uniqueTransactionId,
+})
+
+// Validate IAP (server-side)
+await SusaPlay.economy.validatePurchase({
+  platform: 'ios',
+  productId: 'com.game.pack1',
+  receipt: appleReceiptData,
+})
+```
+
+## Saves
+
+```javascript
+// Write save
+await SusaPlay.saves.write({
+  slotId: 'main',
+  data: { level: 5, coins: 1200 },
+  version: currentVersion,
+})
+
+// Read save
+const save = await SusaPlay.saves.read({ slotId: 'main' })
+```
+
+## Error handling
+
+All SDK calls can throw — always wrap in try/catch:
+
+```javascript
+try {
+  const wallet = await SusaPlay.economy.getWallet()
+} catch (err) {
+  if (err.code === 'UNAUTHENTICATED') {
+    // Re-initialize session
+  } else {
+    // Log and surface to player
+  }
+}
+```
+
+## Key rules
+
+- Call `init` before anything else — it sets up auth and telemetry
+- `spend` operations require an `idempotencyKey` — use a UUID per transaction, never reuse
+- Save writes are versioned — always pass the last-read `version` to prevent conflicts
+- Handle offline state — cache wallet/save data locally and sync on reconnect

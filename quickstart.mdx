@@ -1,0 +1,57 @@
+---
+title: "Quickstart"
+description: "Begin with a guide on the fastest path to a successful outcome"
+---
+
+## Prerequisites
+
+- A SusaPlay developer account ([register at dev.susaplay.com](https://dev.susaplay.com))
+- Your game built for WebGL, iOS, or Android
+
+## Step 1 — Register your game
+
+1. Open [Developer Portal → Register Game](https://dev.susaplay.com/games/new)
+2. Fill in name, description, target platforms
+3. **Copy the game key immediately** — it is shown only once
+
+```text
+gk_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+## Step 2 — Initialize the SDK
+
+```javascript
+import { SusaPlay } from '@susaplay/sdk'
+
+await SusaPlay.init({ gameKey: 'gk_xxxxxxxxxxxxxxxxxxxxxxxx' })
+const player = await SusaPlay.identity.init()
+```
+
+## Step 3 — Verify it works
+
+```javascript
+const wallet = await SusaPlay.economy.getWallet()
+console.log('Player wallet:', wallet)
+```
+
+If you see a wallet response, you are connected.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Economy Config" icon="coins" href="/integration/economy">
+    Define currencies and store items
+  </Card>
+
+  <Card title="Webhooks" icon="webhook" href="/integration/webhooks">
+    Receive platform events on your server
+  </Card>
+
+  <Card title="Upload a Build" icon="upload" href="/integration/builds">
+    Submit your game for review
+  </Card>
+
+  <Card title="LiveOps" icon="radio" href="/liveops/developer-guide">
+    Review and accept campaign content
+  </Card>
+</CardGroup>

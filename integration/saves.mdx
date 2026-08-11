@@ -1,0 +1,69 @@
+---
+title: "Cloud Saves"
+description: "Persist player progress across devices and sessions"
+---
+
+## Overview
+
+SusaPlay cloud saves store arbitrary JSON per player per game. Saves are versioned — concurrent writes are rejected to prevent data loss.
+
+## Write a save
+
+```javascript
+const save = await SusaPlay.saves.read({ slotId: 'main' })
+const currentVersion = save?.version ?? 0
+
+await SusaPlay.saves.write({
+  slotId: 'main',
+  data: {
+    level: 12,
+    inventory: ['sword', 'shield'],
+    settings: { music: true }
+  },
+  version: currentVersion, // must match server version
+})
+```
+
+## Read a save
+
+```javascript
+const save = await SusaPlay.saves.read({ slotId: 'main' })
+if (save) {
+  applyProgress(save.data)
+} else {
+  startFreshGame()
+}
+```
+
+## Version conflicts
+
+If your `version` doesn't match the server's current version, the write is rejected with `VERSION_CONFLICT`. This means another session wrote first.
+
+```javascript
+try {
+  await SusaPlay.saves.write({ slotId: 'main', data, version })
+} catch (err) {
+  if (err.code === 'VERSION_CONFLICT') {
+    // Re-read server version, merge, retry
+    const latest = await SusaPlay.saves.read({ slotId: 'main' })
+    const merged = mergeProgressData(data, latest.data)
+    await SusaPlay.saves.write({ slotId: 'main', data: merged, version: latest.version })
+  }
+}
+```
+
+## Slot IDs
+
+Use multiple slots to separate concerns:
+
+```javascript
+await SusaPlay.saves.write({ slotId: 'progress', data: progressData, version })
+await SusaPlay.saves.write({ slotId: 'settings', data: settingsData, version })
+```
+
+## Rules
+
+- Always read before write — never hardcode `version: 0` after initial setup
+- Keep save data under 1 MB per slot
+- Don't store sensitive data (payment info, auth tokens) in saves
+- Handle offline gracefully — cache locally and sync when reconnected

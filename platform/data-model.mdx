@@ -1,0 +1,102 @@
+---
+title: "Data Model"
+description: "Firestore collection structure"
+---
+
+## Collections
+
+### `/games/{gameId}`
+
+Game registration and metadata.
+
+```text
+gameId            string    auto-generated
+name              string
+description       string
+platforms         string[]  ["webgl", "ios", "android"]
+genre             string
+distribution      string    "public" | "b2b"
+status            string    "active" | "suspended"
+developerUid      string
+thumbnailUrl      string | null
+screenshots       string[]  max 3
+hasLiveWebglBuild boolean
+liveWebglVersionId string | null
+gameKey           string    gk_ prefixed
+adSettings        map
+createdAt         timestamp
+updatedAt         timestamp
+```
+
+### `/versions/{versionId}`
+
+Build versions per game.
+
+```text
+versionId         string
+gameId            string
+platform          string
+status            string    "pending_review" | "approved" | "live" | "deprecated" | "rejected"
+notes             string
+uploadedAt        timestamp
+publishedAt       timestamp | null
+```
+
+### `/players/{uid}/sessions/active`
+
+Active player session data.
+
+### `/liveops_subscriptions/{gameId}`
+
+Per-game LiveOps configuration.
+
+```text
+gameId            string
+status            string    "active" | "suspended"
+targetMarkets     string[]
+iapLadder         map
+missionCatalog    string[]
+rewardTypes       string[]
+requiresDeveloperApproval boolean
+activatedBy       string
+activatedAt       timestamp
+```
+
+### `/liveops_campaigns/{campaignId}`
+
+Campaign lifecycle documents.
+
+```text
+campaignId        string
+gameId            string
+name              string    internal label
+type              string    "liveop" | "SingleOffer" | "ChainOfOffers" | "InAppBoosted"
+status            string    draft → pending_developer → approved → live → expired
+regionTags        string[]
+payload           map       exact JSON sent to game clients
+adminNotes        string
+developerNotes    string | null
+generatedBy       string    "manual" | "ai"
+startDate         timestamp
+endDate           timestamp
+createdBy         string    admin uid
+publishedAt       timestamp | null
+```
+
+### `/audit_log/{logId}`
+
+Platform-wide audit trail. Also mirrored to Cloud Logging.
+
+```text
+action            string
+performedBy       string    uid
+performedByRole   string    "admin" | "developer" | "system"
+targetId          string
+gameId            string
+details           map
+timestamp         timestamp
+```
+
+## Firestore rules
+
+All collections: `allow read, write: if false` — Cloud Functions Admin SDK only.

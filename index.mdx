@@ -1,0 +1,51 @@
+---
+title: "Introduction"
+description: "Welcome to SUSAPlay documents"
+---
+
+SusaPlay handles the backend infrastructure for mobile and WebGL games — so you can focus on the game itself.
+
+## What SusaPlay provides
+
+| Service | What it does |
+| --- | --- |
+| **Identity** | Player auth, guest sessions, account management |
+| **Economy** | Wallet, virtual currencies, store items, IAP validation |
+| **LiveOps** | Campaign delivery without app updates |
+| **Catalog** | Build uploads, versioning, release review |
+| **Webhooks** | Real-time platform events to your backend |
+| **Saves** | Versioned cloud saves across devices |
+| **Analytics** | Session tracking, custom events, BigQuery export |
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/integration/quickstart">
+    Register a game and initialize the SDK in under 10 minutes
+  </Card>
+
+  <Card title="LiveOps" icon="radio" href="/liveops/overview">
+    Push campaigns to your game without an app update
+  </Card>
+
+  <Card title="SDK Reference" icon="code" href="/sdk/overview">
+    Full SDK API for Unity and JavaScript
+  </Card>
+
+  <Card title="API Contract" icon="terminal" href="/platform/api-contract">
+    Base URL, auth, response format, error codes
+  </Card>
+</CardGroup>
+
+## Architecture
+
+SusaPlay runs on Firebase (Cloud Functions, Firestore, Storage) in `europe-west1`. Game assets are served through Cloudflare Workers.
+
+- **Two environments:** staging (`susaplaytest`) and production (`susaplay-2e8e3`)
+- **SDK platforms:** Unity (UPM package) and JavaScript (npm)
+- **Admin access:** [admin.susaplay.com](https://admin.susaplay.com)
+- **Developer access:** [dev.susaplay.com](https://dev.susaplay.com)
+
+## Support
+
+[support@susaplay.com](mailto:support@susaplay.com)

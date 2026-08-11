@@ -1,0 +1,45 @@
+---
+title: "API Keys"
+description: "Keep publishing credentials scoped and rotate them safely"
+---
+
+## Key types
+
+| Key | Used for | Lives in |
+| --- | --- | --- |
+| Game key | SDK init inside the game client | Game binary / env |
+| Developer API key | CI/CD build uploads | Pipeline secrets |
+| Admin credentials | Never used in games | Admin panel only |
+
+## Rules
+
+**Game key goes in the client.** Never put admin credentials or the developer API key inside game code — they have wider permissions.
+
+```javascript
+// Correct — game key in client
+await SusaPlay.init({ gameKey: 'gk_xxxxxxxxxxxxxxxxxxxxxxxx' })
+```
+
+**Separate production and test keys.** Use environment variables so builds never share credentials:
+
+```bash
+# .env.production
+VITE_GAME_KEY=gk_prod_xxxx
+
+# .env.development
+VITE_GAME_KEY=gk_test_xxxx
+```
+
+## Generate or rotate a key
+
+1. Developer Portal → your game → **Settings → API Keys**
+2. Click **Generate New Key**
+3. Copy immediately — shown once
+
+After generating, update your build pipeline secrets before the old key is invalidated.
+
+## If a key is exposed
+
+1. Generate a new key immediately
+2. Update secrets in all environments (CI/CD, staging, production)
+3. Invalidate the old key from the API Keys page

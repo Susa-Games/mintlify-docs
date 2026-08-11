@@ -1,0 +1,81 @@
+---
+title: "API Contract"
+description: "Base URL, authentication, response format, and error codes"
+---
+
+## Base URL
+
+```text
+https://api.susaplay.com
+```
+
+All Cloud Functions run in `europe-west1`.
+
+## Authentication
+
+All endpoints require a Firebase ID token unless marked `[PUBLIC]` or `[DEV_KEY]`.
+
+```bash
+Authorization: Bearer {firebase_id_token}
+```
+
+CI/CD build endpoints use a developer API key:
+
+```bash
+Authorization: ApiKey {developer_api_key}
+```
+
+Partner endpoints use a partner key:
+
+```bash
+Authorization: PartnerKey {partner_key}
+```
+
+## Response format
+
+### Success
+
+```json
+{
+  "success": true,
+  "data": { }
+}
+```
+
+### Error
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INSUFFICIENT_BALANCE",
+    "message": "Human-readable description"
+  }
+}
+```
+
+All timestamps are ISO 8601 strings.
+
+## Error codes
+
+| Code | HTTP | Meaning |
+| --- | --- | --- |
+| `UNAUTHENTICATED` | 401 | Missing or invalid token |
+| `UNAUTHORIZED` | 403 | Authenticated but not permitted |
+| `NOT_FOUND` | 404 | Resource does not exist |
+| `INVALID_ARGUMENT` | 400 | Missing or malformed request body |
+| `INSUFFICIENT_BALANCE` | 400 | Not enough currency to complete spend |
+| `DUPLICATE_PURCHASE` | 400 | Receipt already validated |
+| `INVALID_RECEIPT` | 400 | Apple/Google rejected the receipt |
+| `GAME_NOT_FOUND` | 404 | Game key does not match any active game |
+| `VERSION_CONFLICT` | 409 | Cloud save version mismatch |
+| `RATE_LIMITED` | 429 | Too many requests |
+| `INTERNAL` | 500 | Unexpected server error |
+
+## CORS
+
+Allowed origins are configured per-deployment. The `api.susaplay.com` domain accepts requests from the player portal, game shell, developer portal, and admin panel. Custom origins (partner integrations) must be approved.
+
+## Regions
+
+All functions: `europe-west1`. Firebase Realtime DB and Firestore: `europe-west1`.
