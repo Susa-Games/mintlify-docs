@@ -15,7 +15,7 @@ SusaPlay handles the backend infrastructure for mobile and WebGL games — so yo
 | **Catalog** | Build uploads, versioning, release review |
 | **Webhooks** | Real-time platform events to your backend |
 | **Saves** | Versioned cloud saves across devices |
-| **Analytics** | Session tracking, custom events, BigQuery export |
+| **Analytics** | Session tracking, custom events, raw event export |
 
 ## Get started
 
@@ -37,13 +37,10 @@ SusaPlay handles the backend infrastructure for mobile and WebGL games — so yo
   </Card>
 </CardGroup>
 
-## Architecture
+## Platform basics
 
-SusaPlay runs on Firebase (Cloud Functions, Firestore, Storage) in `europe-west1`. Game assets are served through Cloudflare Workers.
-
-- **Two environments:** staging (`susaplaytest`) and production (`susaplay-2e8e3`)
 - **SDK platforms:** Unity (UPM package) and JavaScript (npm)
-- **Admin access:** [admin.susaplay.com](https://admin.susaplay.com)
+- **Environments:** you get a separate key for staging and for production, so a test build can never talk to live players
 - **Developer access:** [dev.susaplay.com](https://dev.susaplay.com)
 
 ## Support

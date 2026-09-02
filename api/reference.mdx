@@ -9,8 +9,6 @@ description: "Base URL, authentication, response format, and error codes"
 https://api.susaplay.com
 ```
 
-All Cloud Functions run in `europe-west1`.
-
 ## Authentication
 
 All endpoints require a Firebase ID token unless marked `[PUBLIC]` or `[DEV_KEY]`.
@@ -74,8 +72,4 @@ All timestamps are ISO 8601 strings.
 
 ## CORS
 
-Allowed origins are configured per-deployment. The `api.susaplay.com` domain accepts requests from the player portal, game shell, developer portal, and admin panel. Custom origins (partner integrations) must be approved.
-
-## Regions
-
-All functions: `europe-west1`. Firebase Realtime DB and Firestore: `europe-west1`.
+Allowed origins are configured per deployment. Custom origins, including partner integrations, must be approved by SusaPlay before they can call the API.

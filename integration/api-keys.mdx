@@ -9,11 +9,10 @@ description: "Keep publishing credentials scoped and rotate them safely"
 | --- | --- | --- |
 | Game key | SDK init inside the game client | Game binary / env |
 | Developer API key | CI/CD build uploads | Pipeline secrets |
-| Admin credentials | Never used in games | Admin panel only |
 
 ## Rules
 
-**Game key goes in the client.** Never put admin credentials or the developer API key inside game code — they have wider permissions.
+**Game key goes in the client.** Never put the developer API key inside game code — it has wider permissions than the game key.
 
 In Unity the game key lives in the `PlatformConfig` asset, created via **susaplay → Create Config
 Asset**. `SusaPlaySDK.Initialize()` reads it from there.
