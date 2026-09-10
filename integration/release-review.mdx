@@ -49,4 +49,6 @@ resubmit. You don't need to re-register the game.
 A SusaPlay admin sets the version live. You'll receive the `BUILD_LIVE` webhook event when
 players can access it, and `BUILD_REJECTED` if it does not pass.
 
-The previous live version moves to `deprecated` and stops being served.
+The previous live version moves to `deprecated` and stops being served. Deprecated versions
+are eventually removed by [build retention](/integration/builds#build-retention) — the live
+version and anything in review are never removed.

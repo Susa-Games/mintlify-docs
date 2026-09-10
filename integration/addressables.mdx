@@ -1,0 +1,166 @@
+---
+title: "Addressables"
+description: "Ship remote WebGL content without uploading a new build"
+---
+
+Addressables let you change remote content — levels, art, balance data — without publishing a
+new base build. You upload the catalog and bundles once, publish them, and players pick them up
+on their next catalog check.
+
+Addressables are supported for **WebGL only**.
+
+<Note>
+Addressables go live as soon as you publish them. There is no review step — unlike base
+builds, which wait for a SusaPlay reviewer.
+</Note>
+
+## Enable Addressables
+
+1. Developer Portal → your game → **Addressables → Enable**
+2. Copy the **Remote Load Path** shown there
+
+```text
+https://games.susaplay.com/addressables/{gameId}/
+```
+
+Enabling is a one-time setup step and is only available in the portal.
+
+## Unity build settings
+
+Set these before you build the base game:
+
+| Setting | Value |
+| --- | --- |
+| Build Remote Catalog | Enabled |
+| Remote Load Path | The exact URL from the Developer Portal |
+| Bundle Naming Mode | `Filename And Hash` or `Full Path And Hash` |
+
+<Warning>
+The Remote Load Path is baked into the WebGL build. If it is wrong when you build, no
+bundle upload can fix it for players who already have that build — you have to publish a
+new base build.
+</Warning>
+
+Bundle Naming Mode matters because uploaded bundle filenames must carry Unity's
+32-character lowercase hash, such as
+`remote_mainmenu_scenes_all_8a60300e1ab74f60538aa6bf690bc976.bundle`. That hash is also how
+SusaPlay knows a bundle has not changed.
+
+## File requirements
+
+| File | Required name | Max size |
+| --- | --- | --- |
+| Catalog hash | `catalog_{version}.hash` — for example `catalog_1.1.1.hash` | 10 MB |
+| Catalog bin | `catalog_{version}.bin` — same version as the hash | 10 MB |
+| Bundle | `*.bundle` containing the 32-character hash segment | 200 MB |
+
+A publishable set is exactly one catalog hash, exactly one catalog bin with the **same**
+version suffix, and at least one bundle. Mixing catalog files from two different builds is
+rejected — that pair is what tells Unity which bundles to load.
+
+## Upload from the Developer Portal
+
+Developer Portal → your game → **Addressables**, then drop your whole Addressables output
+folder onto the upload area. The portal picks out the catalog pair and every `.bundle`,
+ignores everything else, uploads them in parallel with per-file progress, and skips any
+bundle SusaPlay already has.
+
+## Upload from CI
+
+The same three shapes work with your developer API key. Sign the whole set in one call,
+upload the files, then register them.
+
+### 1. Sign the batch
+
+```bash
+API=https://api.susaplay.com/catalog/game/$GAME_ID/addressables
+
+curl -sS -X POST "$API/upload-batch" \
+  -H "Authorization: ApiKey $DEVELOPER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"files":[
+        {"filename":"catalog_1.1.1.hash","sizeBytes":120},
+        {"filename":"catalog_1.1.1.bin","sizeBytes":8400},
+        {"filename":"remote_scene_0123456789abcdef0123456789abcdef.bundle","sizeBytes":52428800}
+      ]}'
+```
+
+`fileType` is optional — SusaPlay infers it from the filename. The response holds an
+`uploads` array with one signed `uploadUrl` per file, and a `reused` array listing bundles
+you should **not** send because SusaPlay already has them.
+
+### 2. Upload each file
+
+`PUT` each `uploadUrl` with the `Content-Type` given alongside it. URLs are valid for 20
+minutes. Skip everything under `reused`.
+
+### 3. Register and publish
+
+```bash
+curl -sS -X POST "$API/register-batch" \
+  -H "Authorization: ApiKey $DEVELOPER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"files":[
+        {"filename":"catalog_1.1.1.hash"},
+        {"filename":"catalog_1.1.1.bin"},
+        {"filename":"remote_scene_0123456789abcdef0123456789abcdef.bundle"}
+      ]}'
+
+curl -sS -X POST "$API/publish" \
+  -H "Authorization: ApiKey $DEVELOPER_API_KEY"
+```
+
+`register-batch` reports what it recorded, what it reused, and anything `missing` because
+its upload never arrived. `publish` promotes the whole staged set to live and returns
+`publishedFiles`, `changedFiles`, `unchangedFiles`, `removedFiles`, and the
+`catalogVersion` now serving.
+
+<Note>
+Enabling Addressables and deleting staged files stay in the portal. Your API key covers
+uploading, registering, and publishing.
+</Note>
+
+## Only changed bundles move
+
+A bundle filename contains its content hash, so a bundle whose name already exists in your
+live set holds the same bytes. SusaPlay skips the upload and keeps the file it has. On a
+typical incremental Addressables build only the catalog pair and the few bundles you touched
+are transferred and re-cached, which is why publishing is fast even for a large set.
+
+A file that is live but absent from your new set is removed when you publish. Publish the
+complete set every time, not just the changed files.
+
+## Limits
+
+| Limit | Value |
+| --- | --- |
+| Files in one published set | 1,500 |
+| Total size of one published set | 5 GB |
+| Files per `upload-batch` call | 250 |
+
+Split a larger set across several `upload-batch` and `register-batch` calls, then publish
+once at the end.
+
+## Caching
+
+Catalog files are served with `no-cache`, so a published catalog reaches players
+immediately. Bundles are immutable and cached for a year at the edge — safe, because a
+changed bundle gets a new filename.
+
+## If your content is suspended
+
+SusaPlay can suspend a game's Addressables — a kill switch for broken or unsafe remote
+content. While suspended, player requests for your bundles return `403` and the base build
+keeps running. The portal shows the reason. Uploading and publishing are blocked until an
+admin reinstates it.
+
+## Troubleshooting
+
+| Message | Cause |
+| --- | --- |
+| `Bundle filename must include Unity's 32-character lowercase hash segment` | Bundle Naming Mode is not `Filename And Hash` or `Full Path And Hash` |
+| `Catalog hash file must be named catalog_{version}.hash` | You uploaded a renamed or non-catalog file |
+| `Catalog version mismatch` | The hash and bin come from different Addressables builds |
+| `Addressables are not enabled for this game` | Enable them in the portal first |
+| `Staging addressables are not ready to publish` | The set is missing the catalog pair or has no bundle |
+| `Addressables set would hold … over the 1500 file limit` | Split the content or remove unused bundles |

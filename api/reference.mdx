@@ -17,7 +17,8 @@ All endpoints require a Firebase ID token unless marked `[PUBLIC]` or `[DEV_KEY]
 Authorization: Bearer {firebase_id_token}
 ```
 
-CI/CD build endpoints use a developer API key:
+Build upload and Addressables endpoints also accept a developer API key, for pipelines
+that cannot hold a Firebase session:
 
 ```bash
 Authorization: ApiKey {developer_api_key}
@@ -67,6 +68,8 @@ All timestamps are ISO 8601 strings.
 | `INVALID_RECEIPT` | 400 | Apple/Google rejected the receipt |
 | `GAME_NOT_FOUND` | 404 | Game key does not match any active game |
 | `VERSION_CONFLICT` | 409 | Cloud save version mismatch |
+| `DUPLICATE` | 409 | Build version id already exists |
+| `FAILED_PRECONDITION` | 409 | Too many builds already waiting for review |
 | `RATE_LIMITED` | 429 | Too many requests |
 | `INTERNAL` | 500 | Unexpected server error |
 

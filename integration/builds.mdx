@@ -49,17 +49,67 @@ These are checked before extraction, so an oversized build fails fast rather tha
 
 ## Upload via CI/CD
 
-Use the developer API key:
+Your pipeline uses the same three steps the portal uses, authenticated with your developer
+API key. The zip goes straight to storage, so its size is not limited by the API.
+
+### 1. Ask for a signed upload URL
 
 ```bash
-curl -X POST https://api.susaplay.com/catalog/publish \
+UPLOAD_URL=$(curl -sS -X POST https://api.susaplay.com/catalog/get-upload-url \
   -H "Authorization: ApiKey $DEVELOPER_API_KEY" \
-  -F "gameId=$GAME_ID" \
-  -F "versionId=$VERSION" \
-  -F "platform=webgl" \
-  -F "notes=Build $CI_COMMIT_SHA" \
-  -F "build=@./dist/game.zip"
+  -H "Content-Type: application/json" \
+  -d "{\"gameId\":\"$GAME_ID\",\"versionId\":\"$VERSION\",\"platform\":\"webgl\"}" \
+  | jq -r '.data.uploadUrl')
 ```
+
+The URL is valid for 20 minutes. This call fails early if the version already exists or you
+are at the review cap, so you find out before uploading anything.
+
+### 2. Upload the zip
+
+```bash
+curl -sS -X PUT "$UPLOAD_URL" \
+  -H "Content-Type: application/zip" \
+  --upload-file ./dist/game.zip
+```
+
+### 3. Register the build
+
+```bash
+curl -sS -X POST https://api.susaplay.com/catalog/process-build \
+  -H "Authorization: ApiKey $DEVELOPER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"gameId\":\"$GAME_ID\",\"versionId\":\"$VERSION\",\"platform\":\"webgl\",\"notes\":\"Build $CI_COMMIT_SHA\"}"
+```
+
+SusaPlay validates the archive, extracts it, and creates the version in `pending_review`.
+
+<Warning>
+The old single-call `POST /catalog/publish` endpoint has been removed. It sent the zip in
+the request body, which caps at 32 MiB — smaller than most WebGL builds. Move any pipeline
+still calling it to the three steps above.
+</Warning>
+
+Remote content ships separately — see [Addressables](/integration/addressables) for
+updating levels or art without a new build.
+
+## Build retention
+
+SusaPlay keeps a limited number of builds per platform and deletes older ones
+automatically, along with their files.
+
+| Rule | Value |
+| --- | --- |
+| Builds kept per platform | 5 most recent |
+| Grace period before a build can be removed | 24 hours |
+| Builds you can have in review at once | 3 |
+
+Never deleted automatically: the `live` build, a build waiting for review, and anything
+uploaded within the grace period.
+
+Subscribe to the `BUILD_PRUNED` webhook if your pipeline needs to know when a version was
+removed. Uploading past the review cap is rejected with `409` until one of your pending
+builds is reviewed or deleted, so ask for a review rather than queueing more builds.
 
 ## Version states
 

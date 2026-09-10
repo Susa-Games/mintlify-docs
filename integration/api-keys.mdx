@@ -8,7 +8,12 @@ description: "Keep publishing credentials scoped and rotate them safely"
 | Key | Used for | Lives in |
 | --- | --- | --- |
 | Game key | SDK init inside the game client | Game binary / env |
-| Developer API key | CI/CD build uploads | Pipeline secrets |
+| Developer API key | CI/CD build and Addressables uploads | Pipeline secrets |
+
+Send the developer API key as `Authorization: ApiKey {key}` — not as a bearer token. It
+works on the [build upload](/integration/builds#upload-via-ci-cd) endpoints and on the
+[Addressables](/integration/addressables#upload-from-ci) upload and publish endpoints,
+scoped to the games you own.
 
 ## Rules
 

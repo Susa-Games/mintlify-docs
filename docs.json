@@ -27,6 +27,7 @@
           "integration/saves",
           "integration/webhooks",
           "integration/builds",
+          "integration/addressables",
           "integration/release-review"
         ]
       },
