@@ -25,7 +25,9 @@ if (wallet.Success)
 var store = await SusaPlaySDK.Purchases.GetStoreItems();
 ```
 
-Items come from the economy config you defined in the Developer Portal.
+Items come from the economy config you defined in the Developer Portal. The response carries the
+id, name, description, icon, type, price and whether the item can be bought with wallet balance —
+it deliberately does not include the provider SKU, which the platform resolves at checkout.
 
 ## Spending
 
@@ -49,8 +51,8 @@ Grant the item in your game only after `Success` is true. Never grant optimistic
 
 ## Real-money purchases
 
-Checkout is handled by the shell through Xsolla. Your game starts the flow and awaits the
-outcome.
+Checkout is handled by the shell. Your game starts the flow and awaits the outcome — which
+payment provider takes the money is a platform setting, and your game never names one.
 
 ```csharp
 // Buy a specific item
@@ -66,13 +68,15 @@ Available top-up packs:
 var packs = await SusaPlaySDK.Purchases.GetTopupPacks();
 ```
 
-`XsollaPurchaseResult`:
+`PurchaseResult`:
 
 | Field | Type | Notes |
 | --- | --- | --- |
 | `Success` | `bool` | True only when payment completed and rewards were credited |
 | `Status` | `string` | `paid`, `canceled`, `timeout` |
-| `PlatformWallet` | object | Balance after the transaction |
+| `WalletScope` | `string` | `live` or `sandbox` — which wallet the balance landed in |
+| `Wallet` | object | Game wallet balance after the transaction |
+| `PlatformWallet` | object | Platform wallet balance after the transaction |
 | `ErrorCode`, `ErrorMessage` | `string` | Populated on failure |
 
 The purchase call waits up to three minutes — a player has to move through a real checkout. Show
@@ -86,13 +90,25 @@ next session rather than assuming a cancelled checkout means no charge.
 
 ## Sandbox
 
-Every purchase method takes a `sandbox` flag for testing against Xsolla's sandbox:
+Every purchase method takes a `sandbox` flag, which **requests** the test lane:
 
 ```csharp
 await SusaPlaySDK.Purchases.StartDirectItemPurchase("starter_pack", sandbox: true);
 ```
 
+The server decides whether to grant it. It is granted to platform admins and to a developer on
+their own games; every other caller transacts live whatever the flag says. A sandbox purchase
+credits a separate test wallet that never touches the live balance — `WalletScope` on the result
+tells you which one you are looking at, so a test purchase is never mistaken for one that failed
+to credit.
+
 ## In-app purchases (iOS / Android)
 
-Native store receipt validation exists in the backend but is currently disabled. Real-money
-purchases go through Xsolla for all platforms today.
+Not supported. SusaPlay runs on WebGL, and the native store receipt-validation path has been
+removed. Every real-money purchase goes through the browser checkout described above.
+
+<Note>
+SDK 2.0 renamed the purchase API off the payment provider: `StartXsollaPurchase` is now
+`StartPurchase` and `XsollaPurchaseResult` is now `PurchaseResult`, with no deprecated aliases.
+A game built against 1.x needs rebuilding against 2.0.
+</Note>

@@ -8,7 +8,7 @@ description: "Define currencies, store items, and purchase metadata"
 Economy config is developer-owned metadata stored per game. It defines:
 
 - **Currencies** — virtual currencies players earn and spend
-- **Store items** — purchasable items with pricing and IAP product ID mappings
+- **Store items** — purchasable items with pricing and, for real-money items, their provider SKU
 
 Changes take effect immediately — no release needed.
 
@@ -43,17 +43,18 @@ currency_1    Bad — meaningless, invites renaming later
 | Type | Yes | `durable` (owned forever) or `consumable` (used once) |
 | Price currency | Yes | Must match a configured currency ID |
 | Price amount | Yes | Cost in that currency |
-| iOS product ID | No | Must match App Store product ID exactly |
-| Android product ID | No | Must match Play Store SKU exactly |
-| Xsolla SKU | No | Required only if this item is sold through the Xsolla checkout |
+| Provider SKU | No | The identifier this item is sold under at the payment provider. Required only if the item is sold for real money; the platform resolves it at checkout |
 
-**IAP product IDs are case-sensitive.** `com.game.Pack1` ≠ `com.game.pack1`.
+<Note>
+  SusaPlay runs on WebGL. There are no iOS or Android store product IDs to configure — real-money
+  purchases go through the browser checkout.
+</Note>
 
 ## After changes
 
 Retest:
 
-- Purchase flows (IAP \+ wallet)
+- Purchase flows (real-money checkout \+ wallet spend)
 - Reward flows (ads, achievements)
 - Balance display in-game
 

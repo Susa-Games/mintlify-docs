@@ -82,7 +82,7 @@ var store = await SusaPlaySDK.Purchases.GetStoreItems();
 // Spend platform-wallet currency on an item
 var result = await SusaPlaySDK.Purchases.SpendPlatformWallet("sword_of_fire");
 
-// Start a real-money purchase — the shell opens the Xsolla checkout
+// Start a real-money purchase — the shell opens the checkout
 var purchase = await SusaPlaySDK.Purchases.StartDirectItemPurchase("starter_pack");
 
 // Or top up the platform wallet
