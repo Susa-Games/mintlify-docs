@@ -1,0 +1,85 @@
+---
+title: "Webhooks"
+description: "Send your game's own events to your server, and unlock achievements or report levels with them"
+---
+
+`SusaPlaySDK.Webhooks` sends an event from your game to SusaPlay, which forwards it to every webhook
+endpoint you subscribed to `CUSTOM_WEBHOOK_EVENT`. Use it when your own server needs to know what
+happens in the game. Setting up the endpoint and verifying its signature is covered in
+[Webhooks](/integration/webhooks).
+
+## Send an event
+
+```csharp
+SusaPlaySDK.Webhooks.SendEvent("boss_defeated", 1, new Dictionary<string, object>
+{
+    { "bossId", "dragon" },
+    { "seconds", 94.5 },
+});
+```
+
+`SendEvent(eventName, value, parameters)` returns immediately. `value` and `parameters` are
+optional; values can be strings, numbers, booleans, lists and dictionaries.
+
+To wait for the platform's answer, use `SendEventAsync`, which returns an `HttpResponse`:
+
+```csharp
+var response = await SusaPlaySDK.Webhooks.SendEventAsync("boss_defeated", 1);
+if (!response.Success)
+{
+    Debug.LogWarning(response.Error);
+}
+```
+
+An empty event name is not sent.
+
+## What your server receives
+
+A `CUSTOM_WEBHOOK_EVENT` delivery whose `data` holds the player, the session and your event:
+
+```json
+{
+  "uid": "player-uid",
+  "partnerId": null,
+  "sessionId": "session-id",
+  "eventName": "boss_defeated",
+  "clientTimestamp": "2026-07-20T14:30:00.0000000Z",
+  "playerID": "player-uid",
+  "eventname": "boss_defeated",
+  "value": 1,
+  "parameters": { "bossId": "dragon", "seconds": 94.5 }
+}
+```
+
+For a player who arrived through a partner, `partnerId` is set and `externalUserId` carries the
+partner's own id for that player.
+
+## Reserved event names
+
+Two names do more than forward the event.
+
+### `level_up`
+
+Reports the player's level. The level must be a non-negative integer, sent as `level` in the
+parameters or as the value:
+
+```csharp
+SusaPlaySDK.Webhooks.SendEvent("level_up", 7);
+```
+
+Without a valid level the event is refused with `400 INVALID_ARGUMENT`.
+
+### `achievement_unlocked`
+
+Unlocks a one-shot achievement for the player, exactly as
+[`Achievements.Unlock`](/sdk/achievements#unlock) does, and then forwards the event:
+
+```csharp
+SusaPlaySDK.Webhooks.SendEvent("achievement_unlocked", null, new Dictionary<string, object>
+{
+    { "achievementId", "first_win" },
+});
+```
+
+Without an `achievementId` the event is refused with `400 INVALID_ARGUMENT`; an id you have not
+registered gets `404 NOT_FOUND`.

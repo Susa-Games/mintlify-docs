@@ -1,0 +1,78 @@
+---
+title: "Ads"
+description: "Show rewarded and interstitial ads, and grant rewards only when the platform credits them"
+---
+
+Your game asks the SusaPlay page to show an ad, and the page answers when the ad ends. The SDK
+never loads an ad itself: which network runs, and whether a reward is credited, is decided by the
+platform from your game's ad settings.
+
+## Rewarded ads
+
+```csharp
+var result = await SusaPlaySDK.Ads.ShowRewarded();
+
+if (result.Rewarded)
+{
+    // The reward is already in the player's wallet. Update your UI.
+}
+else if (result.Success)
+{
+    // The ad played, but no reward was credited this time.
+}
+else
+{
+    Debug.Log($"No ad: {result.Reason}");
+}
+```
+
+<Warning>
+Check `Rewarded`, not `Success`, before you grant anything. An ad can play to the end and still
+credit nothing, because the daily maximum and the cooldown are checked on the server after the ad
+finishes.
+</Warning>
+
+The platform credits the reward to the player's wallet itself. Your game never adds coins for a
+rewarded ad.
+
+## Interstitial ads
+
+```csharp
+var result = await SusaPlaySDK.Ads.ShowInterstitial();
+```
+
+An interstitial credits nothing, so `Rewarded` is always `false` and `Success` is the only answer
+that matters.
+
+## AdResult
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `Success` | `bool` | The ad played to the end. Says nothing about a reward |
+| `Rewarded` | `bool` | The reward was credited. Always `false` for an interstitial |
+| `Reason` | `string` | Why the ad failed, or `null` on success |
+| `AdType` | `string` | `rewarded` or `interstitial` |
+| `RequestId` | `string` | An id for this request |
+
+| `Reason` | Meaning |
+| --- | --- |
+| `ADS_DISABLED` | Ads are turned off in your game's ad settings |
+| `TIMEOUT` | The SDK had no answer after 180 seconds |
+| anything else | Reported by the ad network the platform chose |
+
+## Reward rules
+
+Your game's ad settings set the reward amount, how many rewarded ads a player can be credited for
+each day, and how long they wait between rewards. When they are not set, the platform uses 50
+coins, 10 a day, and 30 minutes apart. Inside the cooldown or past the daily maximum, the ad still
+plays and `Rewarded` is `false`.
+
+While rewarded ads are turned off, every ad request fails with `ADS_DISABLED` — interstitials
+included.
+
+Your game's ad settings are managed by SusaPlay. Contact us to change them.
+
+## Test in the Editor
+
+The [Editor Simulator](/sdk/editor-simulator#purchases-and-ads) answers ads in Play Mode using your
+game's real ad settings, so you can test the daily maximum and the cooldown without a build.

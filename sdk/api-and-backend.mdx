@@ -1,0 +1,84 @@
+---
+title: "Api and Backend"
+description: "Two low-level modules: authenticated SusaPlay calls, and a partner's API in partner embeds"
+---
+
+Most games never need these modules: saves, achievements, purchases, ads and analytics have their
+own. Use them only when no module covers what you need.
+
+| Module | Calls | Works |
+| --- | --- | --- |
+| `SusaPlaySDK.Backend` | SusaPlay's API, as the signed-in player | Everywhere the SDK is initialized |
+| `SusaPlaySDK.Api` | The API of the partner whose site embeds your game | Only in a partner embed |
+
+## Backend
+
+`Backend` sends a request to SusaPlay's API with the player's token attached, and returns an
+`HttpResponse`. The platform decides what the player may do on each route.
+
+```csharp
+var response = await SusaPlaySDK.Backend.Get("/engagement/achievements/list?gameId=" + SusaPlaySDK.GameId);
+
+var posted = await SusaPlaySDK.Backend.Post("/some/route", "{\"key\":\"value\"}");
+```
+
+- The path must be relative and start with `/`. A full URL is refused, so the player's token is
+  never sent to another host.
+- `Post` sends `{}` when the body is `null`.
+
+`HttpResponse`:
+
+| Field | Meaning |
+| --- | --- |
+| `Success` | The request succeeded |
+| `Data` | The response body |
+| `Error` | On failure, the error and the response body |
+| `StatusCode` | The HTTP status |
+
+<Note>
+In the [Editor Simulator](/sdk/editor-simulator), a route the simulator does not answer returns
+`501 SIMULATOR_UNSUPPORTED_ROUTE`. Test such calls in a build preview.
+</Note>
+
+## Api
+
+`Api` reaches the API of a SusaPlay partner when your game runs inside that partner's site. The
+SusaPlay page forwards the request to the partner's server, using the base URL, the allowed paths and
+the credentials SusaPlay holds for that partner. Your game never sees the partner's credentials.
+
+```csharp
+var result = await SusaPlaySDK.Api.Get("/profile");
+
+if (result.Success)
+{
+    Debug.Log(result.Data);
+}
+else
+{
+    Debug.Log($"{result.ErrorCode}: {result.ErrorMessage}");
+}
+```
+
+Methods: `Get(endpoint)`, `Get(endpoint, parameters)`, `Post(endpoint, json)` and
+`Request(method, endpoint, json)`. Only `GET` and `POST` are supported, and the endpoint must be a
+relative path.
+
+`ApiResult`:
+
+| Field | Meaning |
+| --- | --- |
+| `Success` | The partner answered successfully |
+| `Data` | The partner's response, as JSON |
+| `ErrorCode`, `ErrorMessage` | Why it failed |
+
+| `ErrorCode` | Meaning |
+| --- | --- |
+| `UNAVAILABLE` | The game is not running in a partner embed |
+| `TIMEOUT` | No answer within 10 seconds |
+| `INVALID_ARGUMENT` | The endpoint is not a relative path, or the method is not `GET` or `POST` |
+| `UNAUTHORIZED` | The path is not one the partner allows, or the partner may not call APIs for this game |
+| `FAILED_PRECONDITION` | The partner's API is not set up |
+| `PARTNER_API_UNAVAILABLE` | The partner's server could not be reached |
+| `PAYLOAD_TOO_LARGE` | The partner's response was too large to forward |
+
+The partner's base URL and allowed paths are set by SusaPlay when the partnership is configured.

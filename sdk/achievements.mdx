@@ -1,0 +1,81 @@
+---
+title: "Achievements"
+description: "Unlock achievements and track progress from your game"
+---
+
+Achievements are defined in the Developer Portal: id, name, description, icon, type and points.
+Your game only sends the id. Points come from the definition, because they feed the player's
+level across SusaPlay.
+
+<Note>
+Register an achievement in the Developer Portal before your game unlocks it. An id that is not
+registered is refused with `404 NOT_FOUND`, and nothing is recorded.
+</Note>
+
+## Types
+
+| Type | Call | Unlocks when |
+| --- | --- | --- |
+| One-shot | `Unlock(id)` | You call `Unlock` |
+| Incremental | `Increment(id, amount)` | The counter reaches the target set in the portal |
+
+Calling `Unlock` on an incremental achievement, or `Increment` on a one-shot one, fails with
+`400 INVALID_ARGUMENT`.
+
+## Unlock
+
+```csharp
+var response = await SusaPlaySDK.Achievements.Unlock("first_win");
+```
+
+Unlocking is safe to repeat. A second unlock of the same achievement awards nothing and changes
+nothing; its `newlyUnlocked` is `false`.
+
+## Increment
+
+```csharp
+var response = await SusaPlaySDK.Achievements.Increment("collector", 1);
+```
+
+`amount` must be greater than zero. The server keeps the counter and unlocks the achievement when
+it reaches the target, so your game never tracks the threshold itself. Points are awarded once,
+when the target is crossed.
+
+## List
+
+```csharp
+var response = await SusaPlaySDK.Achievements.List();
+```
+
+Returns every achievement of your game with the player's progress on each.
+
+## Responses
+
+All three methods return an `HttpResponse`:
+
+| Field | Meaning |
+| --- | --- |
+| `Success` | The request succeeded |
+| `Data` | The response body as JSON: `{"success": true, "data": {...}}` |
+| `Error` | On failure, the error and the response body, with its `code` |
+| `StatusCode` | The HTTP status |
+
+The `data` of each response:
+
+| Call | Fields |
+| --- | --- |
+| `Unlock` | `achievementId`, `unlockedAt`, `newlyUnlocked`, `points`, `progression` |
+| `Increment` | `achievementId`, `currentValue`, `targetValue`, `justUnlocked`, `points` (0 unless it just unlocked), `progression` |
+| `List` | `achievements`: each with `achievementId`, `name`, `description`, `iconUrl`, `type`, `targetValue`, `currentValue`, `points`, `unlocked`, `unlockedAt` |
+
+`targetValue` and `currentValue` are `null` for one-shot achievements.
+
+## From a webhook event
+
+Sending the custom event `achievement_unlocked` with an `achievementId` parameter unlocks a one-shot
+achievement the same way — see [Webhooks](/sdk/webhooks#achievement_unlocked).
+
+## Test in the Editor
+
+The [Editor Simulator](/sdk/editor-simulator) applies the same rules in Play Mode — including
+`NOT_FOUND` for an id you have not registered — using the definitions you download from the portal.

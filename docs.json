@@ -39,6 +39,10 @@
           "sdk/economy",
           "sdk/saves",
           "sdk/analytics",
+          "sdk/achievements",
+          "sdk/ads",
+          "sdk/webhooks",
+          "sdk/api-and-backend",
           "sdk/editor-simulator"
         ]
       },
