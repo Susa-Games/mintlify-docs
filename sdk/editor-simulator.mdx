@@ -60,7 +60,8 @@ take in production. For example:
 - an achievement ID that is not registered gets `404 NOT_FOUND`; `Unlock` on an incremental
   achievement gets `400`
 - spending more than the wallet holds gets `409 INSUFFICIENT_BALANCE`, and buying a durable item
-  the player already owns gets `409 DUPLICATE_ITEM`
+  the player already owns gets `409 DUPLICATE_ITEM` from the wallet, or `token-failed` from
+  checkout
 - a guest gets `401` from every API call, because a guest has no token
 
 These rules are not written from memory. SusaPlay checks them against its real servers with a set
@@ -72,8 +73,9 @@ of contract cases, and the SDK runs the same cases against the simulator
 **Reset player** in the window for a new, empty player.
 
 **It warns you about what the platform drops silently.** An analytics event without a name, or a
-`level_up` event without a valid `level`, is accepted by the platform but never counted. The
-simulator accepts it the same way and adds a warning to the Console.
+`level_up` event without a valid `level`, is dropped by the platform without an error while the
+rest of the batch is accepted. The simulator drops it the same way and adds a warning to the
+Console.
 
 ## The Simulator window
 

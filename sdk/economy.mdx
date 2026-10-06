@@ -73,11 +73,14 @@ var packs = await SusaPlaySDK.Purchases.GetTopupPacks();
 | Field | Type | Notes |
 | --- | --- | --- |
 | `Success` | `bool` | True only when payment completed and rewards were credited |
-| `Status` | `string` | `paid`, `canceled`, `timeout` |
-| `WalletScope` | `string` | `live` or `sandbox` — which wallet the balance landed in |
+| `Status` | `string` | `paid`; `canceled` or `dismissed` (the player canceled or closed checkout); `auth-dismissed` (a guest declined to sign in); `token-failed` (checkout could not start — `ErrorMessage` says why); `timeout` |
+| `WalletScope` | `string` | `live` or `sandbox` — which wallet the balance landed in. Empty when checkout never opened |
 | `Wallet` | object | Game wallet balance after the transaction |
 | `PlatformWallet` | object | Platform wallet balance after the transaction |
 | `ErrorCode`, `ErrorMessage` | `string` | Populated on failure |
+
+A durable item the player already owns is refused before checkout opens: `token-failed`, with
+`ErrorMessage` "Durable item is already owned". Check the inventory before offering it.
 
 The purchase call waits up to three minutes — a player has to move through a real checkout. Show
 a waiting state rather than blocking input.

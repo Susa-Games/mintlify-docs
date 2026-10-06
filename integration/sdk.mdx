@@ -17,7 +17,7 @@ Add the package to your `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "com.susaplay.sdk": "https://github.com/susaplay/com.susaplay.sdk.git"
+    "com.susaplay.sdk": "https://github.com/Susa-Games/com.susaplay.sdk.git#v1.9.1"
   }
 }
 ```
@@ -48,10 +48,11 @@ public class Bootstrap : MonoBehaviour
 ```
 
 `Initialize()` reads your game key from the `PlatformConfig` asset — create it with
-**susaplay → Create Config Asset** in the Unity menu. Do not hardcode the key.
+**SusaPlay → Setup** in the Unity menu. Do not hardcode the key.
 
 If the shell does not answer within 15 seconds, initialization logs an error and returns. The
-module properties stay null, so check before using them.
+module properties stay null, so check before using them. In the Unity Editor, SDK 1.9.0 and later
+answer with the Editor Simulator instead — see [Test in the Unity Editor](/sdk/editor-simulator).
 
 ## Identity
 

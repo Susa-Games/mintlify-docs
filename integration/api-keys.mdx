@@ -19,8 +19,8 @@ scoped to the games you own.
 
 **Game key goes in the client.** Never put the developer API key inside game code — it has wider permissions than the game key.
 
-In Unity the game key lives in the `PlatformConfig` asset, created via **susaplay → Create Config
-Asset**. `SusaPlaySDK.Initialize()` reads it from there.
+In Unity the game key lives in the `PlatformConfig` asset, created via **SusaPlay →
+Setup**. `SusaPlaySDK.Initialize()` reads it from there.
 
 ```csharp
 // Correct — the SDK reads the key from PlatformConfig

@@ -24,7 +24,7 @@ Add to `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "com.susaplay.sdk": "https://github.com/susaplay/com.susaplay.sdk.git"
+    "com.susaplay.sdk": "https://github.com/Susa-Games/com.susaplay.sdk.git#v1.9.1"
   }
 }
 ```
@@ -32,10 +32,10 @@ Add to `Packages/manifest.json`:
 Or in Unity Package Manager → **Add package from git URL**:
 
 ```text
-https://github.com/susaplay/com.susaplay.sdk.git
+https://github.com/Susa-Games/com.susaplay.sdk.git#v1.9.1
 ```
 
-Then run **susaplay → Create Config Asset** and fill in your game key.
+Then open **SusaPlay → Setup**, paste your game key, and click **Save**.
 
 ## Modules
 
@@ -90,7 +90,8 @@ every module is ready in Play Mode without a build. See
 
 ## Version
 
-The SDK reports its version to the shell during the handshake. Current release: **1.3.0**.
+The SDK reports its version to the shell during the handshake. Current release: **1.9.1**.
 
-Some behaviour is version-gated — `session_start` analytics requires 1.3.0 or later. Rebuild
+Some behaviour is version-gated — `session_start` analytics requires 1.3.0 or later, and the
+Editor Simulator 1.9.0 or later. Pin a release tag (`#v1.9.1`) for reproducible installs. Rebuild
 your game after upgrading the package; the version is compiled into the WebGL build.
