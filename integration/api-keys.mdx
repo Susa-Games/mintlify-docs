@@ -41,14 +41,15 @@ Assets/SusaPlay/PlatformConfig.staging.asset  # staging
 
 ## Generate or rotate a key
 
-1. Developer Portal → your game → **Settings → API Keys**
-2. Click **Generate New Key**
-3. Copy immediately — shown once
+1. Developer Portal → **API Keys**
+2. Click **Generate key**. To replace an existing key, click **Regenerate API Key**, then
+   **Yes, regenerate**
+3. Copy the key immediately — it is shown once
 
-After generating, update your build pipeline secrets before the old key is invalidated.
+You have one developer API key. Regenerating replaces it, and the old key **stops working
+immediately**, so update your pipeline secrets right after you regenerate.
 
 ## If a key is exposed
 
-1. Generate a new key immediately
-2. Update secrets in all environments (CI/CD, staging, production)
-3. Invalidate the old key from the API Keys page
+1. Regenerate it in the Developer Portal — the exposed key stops working at once
+2. Update the secret in every pipeline and environment that uses it

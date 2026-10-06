@@ -1,7 +1,3 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
-
 # Documentation project instructions
 
 ## About this project
@@ -14,12 +10,23 @@
 
 ## Terminology
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+| Use | Not | Note |
+| --- | --- | --- |
+| SusaPlay | Susa Play, Susaplay, SP | Never translated or abbreviated |
+| Developer Portal | dashboard, console | The site at `dev.susaplay.com` |
+| game key | app key, client key | Public; lives in `PlatformConfig.asset` and the build |
+| developer API key | secret key, token | Sent as `Authorization: ApiKey {key}`; never in game code |
+| build | release, binary | A WebGL upload. Each has a version such as `1.4.2` |
+| live, in review | published, pending | The statuses a developer sees for a build |
+| Addressables | asset bundles, DLC | Remote content published apart from builds |
+| guest, signed-in player | anonymous user, logged-in user | |
+| Editor Simulator | sandbox, emulator | Testing in Play Mode with no build |
+
+- **Payments:** Xsolla runs checkout. Never call Xsolla a payment processor or payment service
+  provider, and never say or imply that SusaPlay is the merchant of record.
+- **WebGL only.** No Android or iOS instructions, and no platform choice in examples.
 
 ## Style preferences
-
-{/* Add any project-specific style rules below */}
 
 - Use active voice and second person ("you")
 - Keep sentences concise — one idea per sentence

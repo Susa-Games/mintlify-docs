@@ -34,12 +34,19 @@ Set these before you build the base game:
 | Build Remote Catalog | Enabled |
 | Remote Load Path | The exact URL from the Developer Portal |
 | Bundle Naming Mode | `Filename And Hash` or `Full Path And Hash` |
+| Catalog format | Binary — SusaPlay accepts `catalog_{version}.bin`, not `.json` |
 
 <Warning>
 The Remote Load Path is baked into the WebGL build. If it is wrong when you build, no
 bundle upload can fix it for players who already have that build — you have to publish a
 new base build.
 </Warning>
+
+A binary catalog is the default in Addressables 2.x, which runs on Unity 6: leave
+**Enable Json Catalog** off in the Addressable Asset Settings. Addressables 1.x writes a JSON
+catalog, which SusaPlay refuses. If you stay on Unity 2021.3 or 2022.3, use Addressables 1.21.3 or
+later and add `ENABLE_BINARY_CATALOG` to the WebGL **Scripting Define Symbols** in Player
+Settings, then rebuild both the player and the content.
 
 Bundle Naming Mode matters because uploaded bundle filenames must carry Unity's
 32-character lowercase hash, such as
@@ -161,6 +168,7 @@ admin reinstates it.
 | `Bundle filename must include Unity's 32-character lowercase hash segment` | Bundle Naming Mode is not `Filename And Hash` or `Full Path And Hash` |
 | `Catalog hash file must be named catalog_{version}.hash` | You uploaded a renamed or non-catalog file |
 | `Catalog version mismatch` | The hash and bin come from different Addressables builds |
+| `Could not determine the addressables file type of catalog_….json` | The catalog is JSON. Build a binary catalog — see [Unity build settings](#unity-build-settings) |
 | `Addressables are not enabled for this game` | Enable them in the portal first |
 | `Staging addressables are not ready to publish` | The set is missing the catalog pair or has no bundle |
 | `Addressables set would hold … over the 1500 file limit` | Split the content or remove unused bundles |
