@@ -82,6 +82,12 @@ and a second call while the first is still running is ignored.
 If the shell does not respond within 15 seconds, initialization logs an error and gives up.
 Guard against null modules if your game can run standalone.
 
+<Tip>
+In the Unity Editor, SDK 1.9.0 and later answer `Initialize()` with the Editor Simulator, so
+every module is ready in Play Mode without a build. See
+[Test in the Unity Editor](/sdk/editor-simulator).
+</Tip>
+
 ## Version
 
 The SDK reports its version to the shell during the handshake. Current release: **1.3.0**.

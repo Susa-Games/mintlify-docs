@@ -38,7 +38,8 @@
           "sdk/identity",
           "sdk/economy",
           "sdk/saves",
-          "sdk/analytics"
+          "sdk/analytics",
+          "sdk/editor-simulator"
         ]
       },
       {

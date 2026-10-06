@@ -1,0 +1,170 @@
+---
+title: "Test in the Unity Editor"
+description: "Run your SusaPlay integration in Play Mode without a WebGL build, using the SDK's Editor Simulator"
+---
+
+From SDK **1.9.0**, the SDK works in the Unity Editor. Press Play and the Editor Simulator answers
+your game in place of the SusaPlay page and platform: `Initialize()` completes, every module is
+ready, and saves, achievements, the store, purchases and ads behave as they do on the platform.
+
+You test in two tiers, as on most platforms:
+
+| Tier | Where | Use it for |
+| --- | --- | --- |
+| **Editor Simulator** | Play Mode in the Unity Editor | Daily work: every integration path, in seconds, with no build |
+| **Build preview** | A WebGL build in the SusaPlay shell | Before release: the real page, checkout, ads and browser |
+
+<Note>
+The simulator runs entirely on your machine. Nothing is sent to SusaPlay during Play and nothing
+is written to the platform, so you can test as often as you like, with or without a network.
+</Note>
+
+## Set up
+
+<Steps>
+  <Step title="Upgrade the SDK">
+    Install `com.susaplay.sdk` **1.9.0** or later. Older versions time out in the Editor and leave
+    every module `null`.
+  </Step>
+  <Step title="Download your game's configuration">
+    In the [Developer Portal](https://dev.susaplay.com), open your game and click
+    **Download for Unity Editor**. You get `SimulatorConfig.json`: your achievement definitions,
+    store items, top-up packs and ad settings.
+  </Step>
+  <Step title="Import it">
+    In Unity, open **SusaPlay → Simulator** and click **Import configuration…**. The file is copied
+    to `ProjectSettings/Packages/com.susaplay.sdk/`. Commit it so your whole team uses it.
+  </Step>
+  <Step title="Press Play">
+    Your game initializes as a signed-in simulated player. The **Request log** in the Simulator
+    window shows every message and request with the platform's answer.
+  </Step>
+</Steps>
+
+The configuration holds nothing secret — IDs, names, prices and ad settings your store already
+shows players — and it never reaches a build. After you change achievements, items or ad settings
+in the portal, download and import it again; the window shows how old the imported file is.
+
+Without a configuration, the simulator behaves like the platform for a game with nothing
+configured: the store is empty, every achievement is `NOT_FOUND` and every purchase fails with
+`ITEM_NOT_FOUND`. Saves, analytics, custom events, sign-in and ads work fully either way.
+
+## What the simulator does
+
+**It answers with the platform's own rules.** Every request gets the status code, error code,
+message and response shape the platform would give it, so your code takes the same paths it will
+take in production. For example:
+
+- a save with a stale version gets `409 VERSION_CONFLICT`, and a save over 500,000 characters
+  gets `400`
+- an achievement ID that is not registered gets `404 NOT_FOUND`; `Unlock` on an incremental
+  achievement gets `400`
+- spending more than the wallet holds gets `409 INSUFFICIENT_BALANCE`, and buying a durable item
+  the player already owns gets `409 DUPLICATE_ITEM`
+- a guest gets `401` from every API call, because a guest has no token
+
+These rules are not written from memory. SusaPlay checks them against its real servers with a set
+of contract cases, and the SDK runs the same cases against the simulator
+(`Tests/Editor/Contract/` in the package).
+
+**It keeps state between Plays.** Saves, achievements, the wallet and the inventory are kept in
+`Library/SusaPlaySimulator/`, so you can test loading a save on the next launch. Press
+**Reset player** in the window for a new, empty player.
+
+**It warns you about what the platform drops silently.** An analytics event without a name, or a
+`level_up` event without a valid `level`, is accepted by the platform but never counted. The
+simulator accepts it the same way and adds a warning to the Console.
+
+## The Simulator window
+
+Open it with **SusaPlay → Simulator**.
+
+| Section | What you can do |
+| --- | --- |
+| **Status** | See your project's game key, the SDK version, the player, and warnings — for example a configuration that belongs to another game |
+| **Configuration** | Import or remove the configuration, or open the game in the Developer Portal |
+| **Player** | Switch to **Guest** for the next Play, **Sign in** a guest during Play, or **Reset player** |
+| **Simulation** | Choose how purchases and ads are answered, and make the next request fail |
+| **Pending** | Answer purchases and ads waiting for you, with the SDK's 180-second countdown |
+| **State** | See saves, achievements and the inventory; set the platform wallet's coins and gems |
+| **Request log** | Every message and request with its status and error. Filter to errors, clear, or copy |
+
+### Purchases and ads
+
+By default purchases are **paid** and ads **complete** automatically, so your game runs with the
+window closed. Set either to **Ask** to answer each one in the **Pending** section:
+
+| Purchases | Your game receives |
+| --- | --- |
+| **Paid** | `Success` true, `Status` `paid`, and the item or top-up is granted |
+| **Canceled** | `Status` `canceled`, `ErrorCode` `PURCHASE_CANCELED` |
+| **Closed** | `Status` `dismissed`, `ErrorCode` `PURCHASE_CLOSED` |
+
+A guest who starts a purchase is asked to sign in first, as on the platform. **Sign in and
+continue** carries the purchase on; **Dismiss** answers `auth-dismissed` with `AUTH_REQUIRED`.
+
+| Ads | Your game receives |
+| --- | --- |
+| **Complete** | `Success` true. A rewarded ad is credited by the reward rules below |
+| **Skip** | `Success` false, `Reason` `dismissed` |
+| **No ad** | `Success` false, `Reason` `notReady` |
+
+Rewarded ads follow your game's ad settings — the reward amount, the daily maximum and the
+cooldown, with the platform defaults of 50 coins, 10 a day and 30 minutes apart when unset. Past
+the maximum or inside the cooldown, the ad still completes but `Rewarded` is false: test that your
+game grants nothing then. With rewarded ads turned off in your settings, every ad, interstitials
+included, fails with `ADS_DISABLED`.
+
+### Failures
+
+Nothing fails on its own without a server, so the window can make it happen. Under
+**Next request fails**, pick a route (or any route) and a failure — `401`, `500` or a network
+error — and click **Arm**. The next matching request fails once, and the log marks it as injected.
+
+A version conflict needs no injection: write a save with a stale version and you get the real
+`409`.
+
+## Showing that the game is simulated
+
+`SusaPlaySDK.IsSimulated` is `true` while the simulator is answering, and always `false` in a build.
+
+```csharp
+if (SusaPlaySDK.IsSimulated)
+{
+    debugBadge.SetActive(true);
+}
+```
+
+<Warning>
+Use `IsSimulated` for a debug display only. Game logic that behaves differently when it is
+`true` is no longer testing what players will run.
+</Warning>
+
+## What still needs a build preview
+
+The simulator covers your integration, not the browser. Before release, upload a build and open it
+with **Preview** in the game's **Builds** tab in the Developer Portal to test:
+
+- WebGL and IL2CPP differences: code stripping, reflection, and threads — WebGL has none, so
+  `Task.Run` and the thread pool behave differently
+- memory limits, load and decompression time, and frame rate in a browser
+- audio autoplay, and keyboard and touch focus inside the page
+- the real checkout, real ads and the sign-in prompt — on your own games, checkout runs in the
+  payment provider's test mode when you pass `sandbox: true`, so no real money moves
+- your own `.jslib` code, and webhook delivery to your server
+
+## Builds
+
+Builds contain none of the simulator. It lives in the SDK's Editor assembly, which Unity leaves
+out of every player build, and the SDK's hooks for it compile only in the Editor. Nothing is added
+to `PlatformConfig.asset`.
+
+## Troubleshooting
+
+| You see | Do this |
+| --- | --- |
+| "PlatformConfig.asset is missing" | Run **SusaPlay → Setup** and enter your game key |
+| "The configuration is for … not this project's gameKey" | Download the configuration for this game, or fix the game key in **SusaPlay → Setup** |
+| `NOT_FOUND` for an achievement you created | Download and import the configuration again — it is a snapshot |
+| A purchase never answers | Purchases are set to **Ask**; answer it under **Pending** before the 180-second timeout |
+| `SIMULATOR_UNSUPPORTED_ROUTE` | A `SusaPlaySDK.Backend` call to a route the simulator does not answer. Test it in a build preview |
