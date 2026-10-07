@@ -90,9 +90,9 @@ its next request, and revoking cannot be undone.
 
 To rotate a key, create a new one, update your pipeline or tool, then revoke the old one.
 
-A key created before October 2026 is listed as "Key created before October 2026" and holds every
-permission. It keeps working. To limit it, create a key with the permissions you need and revoke
-the old one.
+Developer API keys created before October 2026 (starting with `pk_`) no longer work. Create a new
+key in their place. Partner keys, sent as `Authorization: PartnerKey`, are separate and keep
+working.
 
 ## If a key is exposed
 
