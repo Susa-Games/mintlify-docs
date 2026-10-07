@@ -70,6 +70,13 @@ When you create a key, pick a preset or choose the permissions yourself:
 that must publish live.
 </Warning>
 
+## Limits
+
+Each key may make, per minute, 120 reads, 30 writes, 20 upload-URL requests and 10 analytics
+requests. Over a limit, the API answers `429` with the code `RATE_LIMITED` and a `Retry-After`
+header: wait that many seconds and retry. The Addressables batch endpoints sign up to 250 files a
+call, so a pipeline that uses them stays well within the limits.
+
 ## Create a key
 
 1. Developer Portal → **API Keys**

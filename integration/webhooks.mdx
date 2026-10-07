@@ -5,7 +5,7 @@ description: "Receive real-time platform events on your backend server"
 
 ## Overview
 
-Webhooks deliver platform events (builds going live, purchases, analytics) to your backend via HTTP POST. Your server must respond within 10 seconds.
+Webhooks deliver platform events (builds going live, purchases, analytics) to your backend via HTTP POST. Your server must respond within 5 seconds.
 
 ## Create a webhook endpoint
 
@@ -31,6 +31,21 @@ Developer Portal → your game → **Webhooks → Add Endpoint**
 
 Any other event name is silently dropped when you save the subscription — check the saved list
 in the portal to confirm what was accepted.
+
+## Body
+
+Every delivery is a JSON object with the event at the top level and the event's own fields
+under `data`:
+
+```json
+{
+  "eventId": "9f2c4a1e8b7d4c6fa1e05b3d2c8f7a60",
+  "event": "BUILD_LIVE",
+  "gameId": "your-game-id",
+  "timestamp": "2026-07-20T14:30:00Z",
+  "data": { "versionId": "1.4.2", "platform": "webgl" }
+}
+```
 
 ## Verify signatures
 
@@ -78,6 +93,10 @@ app.post('/webhook', express.raw({ type: '*/*' }), (req, res) => {
 - **There are no retries.** A delivery that times out or returns an error is logged and dropped.
   Treat webhooks as best-effort notifications, not a guaranteed queue. If a piece of state must
   be correct, reconcile it against the API rather than relying on having received an event.
+- **Deduplicate on `eventId`.** Every delivery carries an `eventId` at the top level of the
+  body. It identifies the occurrence, not the delivery: one event sent to three of your
+  endpoints carries the same `eventId` to all three, and two separate occurrences never share
+  one. Record the ids you have processed and ignore a repeat.
 - **Be idempotent anyway.** Respond fast, queue the work, and make replays harmless.
 - **Cap your endpoints.** A game can have at most 20 webhooks.
 
