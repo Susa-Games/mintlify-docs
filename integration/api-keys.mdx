@@ -1,6 +1,6 @@
 ---
 title: "API Keys"
-description: "Keep publishing credentials scoped and rotate them safely"
+description: "Create developer API keys with only the permissions each tool needs, and revoke them safely"
 ---
 
 ## Key types
@@ -8,12 +8,14 @@ description: "Keep publishing credentials scoped and rotate them safely"
 | Key | Used for | Lives in |
 | --- | --- | --- |
 | Game key | SDK init inside the game client | Game binary / env |
-| Developer API key | CI/CD build and Addressables uploads | Pipeline secrets |
+| Developer API key | CI/CD build and Addressables uploads | Pipeline secrets, your tool's credential settings |
 
 Send the developer API key as `Authorization: ApiKey {key}` — not as a bearer token. It
 works on the [build upload](/integration/builds#upload-via-ci-cd) endpoints and on the
-[Addressables](/integration/addressables#upload-from-ci) upload and publish endpoints,
-scoped to the games you own.
+[Addressables](/integration/addressables#upload-from-ci) upload and publish endpoints, for the
+games you own, within the permissions the key was created with.
+
+Developer API keys start with `spdk_`.
 
 ## Rules
 
@@ -39,17 +41,60 @@ Assets/SusaPlay/PlatformConfig.asset          # production
 Assets/SusaPlay/PlatformConfig.staging.asset  # staging
 ```
 
-## Generate or rotate a key
+## Permissions
+
+Each key holds only the permissions you choose when you create it.
+
+| Permission | Allows |
+| --- | --- |
+| `games:read` | Reading your games, their versions and their Addressables state |
+| `analytics:read` | Reading analytics |
+| `builds:write` | Uploading and processing builds |
+| `addressables:write` | Uploading and registering Addressables files in staging |
+| `addressables:publish` | Publishing Addressables staging live |
+
+A request that needs a permission the key does not hold is refused with `403` and the code
+`INSUFFICIENT_SCOPE`. The response names the missing permission in `requiredScope`.
+
+When you create a key, pick a preset or choose the permissions yourself:
+
+| Preset | Permissions |
+| --- | --- |
+| AI assistant (recommended for AI coding tools) | `games:read`, `analytics:read`, `builds:write`, `addressables:write` |
+| AI assistant with live publishing | The above, and `addressables:publish` |
+| CI publishing | `games:read`, `builds:write`, `addressables:write`, `addressables:publish` |
+| Read only | `games:read`, `analytics:read` |
+
+<Warning>
+`addressables:publish` changes what players download on their next launch. Give it only to a key
+that must publish live.
+</Warning>
+
+## Create a key
 
 1. Developer Portal → **API Keys**
-2. Click **Generate key**. To replace an existing key, click **Regenerate API Key**, then
-   **Yes, regenerate**
-3. Copy the key immediately — it is shown once
+2. Click **Create key**
+3. Give the key a name that says where it is used, such as "GitHub Actions" or "Cursor — laptop"
+4. Pick a preset, or **Custom** to choose the permissions
+5. Click **Create key** and copy the key immediately — it is shown once
 
-You have one developer API key. Regenerating replaces it, and the old key **stops working
-immediately**, so update your pipeline secrets right after you regenerate.
+You can hold up to 10 active keys. Give each pipeline or tool its own key, so you can revoke one
+without breaking the others.
+
+Never commit a key to a repository, including a checked-in MCP or tool configuration file.
+
+## Revoke a key
+
+In **API Keys**, click **Revoke** next to the key, then **Revoke now**. The key stops working on
+its next request, and revoking cannot be undone.
+
+To rotate a key, create a new one, update your pipeline or tool, then revoke the old one.
+
+A key created before October 2026 is listed as "Key created before October 2026" and holds every
+permission. It keeps working. To limit it, create a key with the permissions you need and revoke
+the old one.
 
 ## If a key is exposed
 
-1. Regenerate it in the Developer Portal — the exposed key stops working at once
-2. Update the secret in every pipeline and environment that uses it
+1. Revoke it in the Developer Portal — the exposed key stops working at once
+2. Create a new key and update the secret in every pipeline and environment that used the old one
