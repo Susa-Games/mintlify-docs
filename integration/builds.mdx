@@ -25,8 +25,8 @@ single one.
 `__MACOSX/` and `._` entries created by macOS are ignored automatically.
 
 <Warning>
-Missing either `index.html` or a `*.loader.js` file is rejected with
-`Invalid build: missing index.html or loader file`.
+A zip without `index.html` or a `*.loader.js` file fails processing. The version is listed as
+`failed` with the reason, and you can upload it again with the same version number.
 </Warning>
 
 ### Archive limits
@@ -46,6 +46,10 @@ These are checked before extraction, so an oversized build fails fast rather tha
 3. Set version ID — use semantic versioning (`1.0.0`) or dates (`2026-08-01`)
 4. Add release notes — describe what changed and how to test
 5. Upload zip
+
+After the upload, the portal shows **Processing build…** while SusaPlay extracts the build,
+usually under a minute. The version then appears as `pending_review`, or as `failed` with the
+reason.
 
 ## Upload via CI/CD
 
@@ -82,7 +86,34 @@ curl -sS -X POST https://api.susaplay.com/catalog/process-build \
   -d "{\"gameId\":\"$GAME_ID\",\"versionId\":\"$VERSION\",\"platform\":\"webgl\",\"notes\":\"Build $CI_COMMIT_SHA\"}"
 ```
 
-SusaPlay validates the archive, extracts it, and creates the version in `pending_review`.
+SusaPlay checks the request and answers `202` with `"status": "processing"`. It then extracts
+the build in the background.
+
+### 4. Wait for processing (optional)
+
+Poll the version until it leaves `processing` and `extracting`:
+
+```bash
+while true; do
+  STATUS=$(curl -sS "https://api.susaplay.com/catalog/game/$GAME_ID/versions/$VERSION" \
+    -H "Authorization: ApiKey $DEVELOPER_API_KEY" | jq -r '.data.version.status')
+  case "$STATUS" in
+    processing|extracting) sleep 5 ;;
+    pending_review) echo "Build is waiting for review"; break ;;
+    *) echo "Build $STATUS"; exit 1 ;;
+  esac
+done
+```
+
+A `failed` version carries the reason in `.data.version.failure.message`. Fix the build and
+upload it again with the same version number. A key with only the `builds:write` permission may
+poll.
+
+<Note>
+Changed in October 2026: `process-build` used to extract the build before answering, so a large
+build could time out while it still succeeded. It now answers `202` at once. A pipeline that only
+checks `success: true` keeps working, but that no longer means the build is ready.
+</Note>
 
 <Warning>
 The old single-call `POST /catalog/publish` endpoint has been removed. It sent the zip in
@@ -104,17 +135,20 @@ automatically, along with their files.
 | Grace period before a build can be removed | 24 hours |
 | Builds you can have in review at once | 3 |
 
-Never deleted automatically: the `live` build, a build waiting for review, and anything
-uploaded within the grace period.
+Never deleted automatically: the `live` build, a build waiting for review or still processing,
+and anything uploaded within the grace period. A `failed` build is deleted by your next
+successful upload and does not count toward the 5.
 
 Subscribe to the `BUILD_PRUNED` webhook if your pipeline needs to know when a version was
-removed. Uploading past the review cap is rejected with `409` until one of your pending
-builds is reviewed or deleted, so ask for a review rather than queueing more builds.
+removed. Builds still processing count toward the review cap. Uploading past the cap is
+rejected with `409` until one of your pending builds is reviewed or deleted, so ask for a review rather than queueing more builds.
 
 ## Version states
 
 | State | Meaning |
 | --- | --- |
+| `processing`, `extracting` | Uploaded; SusaPlay is extracting the build |
+| `failed` | Processing failed — `failure.message` says why; upload again with the same version |
 | `pending_review` | Submitted, awaiting review |
 | `live` | Currently served to players |
 | `deprecated` | Replaced by a newer live version |
