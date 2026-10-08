@@ -3,6 +3,34 @@ title: "Release Review"
 description: "Pass review with a clean submission the first time"
 ---
 
+## Private games
+
+A game registered for the Public catalog starts **private**. Nobody else can find or play it yet:
+
+- Its builds are processed to `ready` instead of `pending_review`. They are not sent for
+  review and do not count toward the review limit.
+- You play them from the Developer Portal: **Builds → Preview** opens a 30-minute link,
+  **Share** creates a 30-day link anyone on your team can open.
+
+When the game is ready, use **Request public** at the top of the game page. Choose one `ready`
+WebGL build. The request needs:
+
+| Requirement | Where to set it |
+| --- | --- |
+| Thumbnail | Overview → thumbnail |
+| Description of at least 200 characters | Overview → edit details |
+| URL slug | Overview → edit details → SEO |
+
+A SusaPlay admin reviews the game and that build together. When approved, the build goes
+live, you receive `BUILD_LIVE`, and the game appears in the public catalog. If it is not
+approved, the reason shows on the game page; fix it and request again. Sending a new request
+replaces the earlier one, which is also how you switch builds.
+
+After a game is public, every new build is reviewed as described below.
+
+A B2B game does not start private. Switching a B2B game to Public makes it private until it is
+approved; a B2B game that already has a live build cannot be switched from the portal.
+
 ## What reviewers check
 
 - All functional flows work from a cold start with a fresh player account

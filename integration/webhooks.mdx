@@ -21,7 +21,7 @@ Developer Portal → your game → **Webhooks → Add Endpoint**
 
 | Event | Triggered when |
 | --- | --- |
-| `BUILD_RECEIVED` | Build processed and waiting for review |
+| `BUILD_RECEIVED` | Build processed: waiting for review (`status: "pending_review"`), or ready to test for a private game (`status: "ready"`) |
 | `BUILD_FAILED` | Build processing failed; the payload carries `failure.code` and `failure.message` |
 | `BUILD_LIVE` | Build reviewed and set live |
 | `BUILD_REJECTED` | Build failed review |

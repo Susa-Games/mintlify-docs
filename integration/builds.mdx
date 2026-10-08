@@ -49,7 +49,18 @@ These are checked before extraction, so an oversized build fails fast rather tha
 
 After the upload, the portal shows **Processing build…** while SusaPlay extracts the build,
 usually under a minute. The version then appears as `pending_review`, or as `failed` with the
-reason.
+reason. For a [private game](/integration/release-review#private-games) it appears as `ready`
+instead: ready to test, and not sent for review.
+
+To play a build that is not live yet, use the buttons on its row:
+
+| Button | What it does |
+| --- | --- |
+| **Preview** | Opens the build on the player site with a single-use link that expires in 30 minutes |
+| **Share** | Creates a 30-day link anyone can open, and copies it. **Copy** and **Revoke** appear under the build. Sharing again returns the same link; revoking cuts everyone off |
+
+Both work for `pending_review` and `ready` WebGL builds. A link stops working once the build
+goes live, is rejected or is deleted.
 
 ## Upload via CI/CD
 
@@ -100,6 +111,7 @@ while true; do
   case "$STATUS" in
     processing|extracting) sleep 5 ;;
     pending_review) echo "Build is waiting for review"; break ;;
+    ready) echo "Build is ready to test (private game)"; break ;;
     *) echo "Build $STATUS"; exit 1 ;;
   esac
 done
@@ -136,7 +148,8 @@ automatically, along with their files.
 | Builds you can have in review at once | 3 |
 
 Never deleted automatically: the `live` build, a build waiting for review or still processing,
-and anything uploaded within the grace period. A `failed` build is deleted by your next
+and anything uploaded within the grace period. A `ready` build of a private game is not under
+review, so it is kept like any other build: among the 5 most recent. A `failed` build is deleted by your next
 successful upload and does not count toward the 5.
 
 Subscribe to the `BUILD_PRUNED` webhook if your pipeline needs to know when a version was
@@ -150,6 +163,7 @@ rejected with `409` until one of your pending builds is reviewed or deleted, so 
 | `processing`, `extracting` | Uploaded; SusaPlay is extracting the build |
 | `failed` | Processing failed — `failure.message` says why; upload again with the same version |
 | `pending_review` | Submitted, awaiting review |
+| `ready` | Processed build of a private game — playable with Preview and Share, not under review |
 | `live` | Currently served to players |
 | `deprecated` | Replaced by a newer live version |
 | `rejected` | Failed review — fix issues and resubmit |

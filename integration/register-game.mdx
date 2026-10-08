@@ -18,10 +18,15 @@ Go to [dev.susaplay.com](https://dev.susaplay.com) → **Register Game**.
 | Field | Notes |
 | --- | --- |
 | Name | Public-facing title shown in the developer catalog |
-| Description | Summary for reviewers — mention gameplay loop and target audience |
+| Description | Required. Summary for reviewers — mention gameplay loop and target audience. A public game needs at least 200 characters before it can go public |
+| Thumbnail | Required. JPEG, PNG, or WebP, under 5 MB — shown on the game's card. Replace it later from the Overview tab |
 | Platforms | Select every platform you plan to support (WebGL, iOS, Android) |
 | Genre | Used for internal filtering — pick the closest fit |
 | Distribution | `Public` or `B2B` — determines who can access the game shell |
+
+A game registered for the **Public** catalog starts **private**: only you can play it, from the
+Developer Portal. See [Private games](/integration/release-review#private-games). A **B2B** game
+does not start private.
 
 ### 3. Copy the game key
 
@@ -35,12 +40,12 @@ gk_xxxxxxxxxxxxxxxxxxxxxxxx
   Copy this immediately. It is shown only once. If you lose it, generate a new key from Settings → API Keys.
 </Warning>
 
-### 4. Add thumbnail and screenshots
+You can tick **Upload the first build now** to go straight to the Builds tab, or upload it later.
 
-Before requesting release review:
+### 4. Add screenshots
 
-- Upload a thumbnail — JPEG, PNG, or WebP, under 5 MB
-- Add up to 3 screenshots showing real gameplay, same formats and size limit
+Before requesting release review, add up to 3 screenshots showing real gameplay — JPEG, PNG, or
+WebP, under 5 MB each.
 
 SVG is rejected. To add a fourth screenshot you have to delete an existing one first.
 
