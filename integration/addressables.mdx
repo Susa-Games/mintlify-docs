@@ -11,7 +11,9 @@ Addressables are supported for **WebGL only**.
 
 <Note>
 Addressables go live as soon as you publish them. There is no review step — unlike base
-builds, which wait for a SusaPlay reviewer.
+builds, which wait for a SusaPlay reviewer. Instead, SusaPlay checks every publish against
+your live build and refuses content that would break it, and you can roll back to an earlier
+release.
 </Note>
 
 ## Enable Addressables
@@ -72,6 +74,10 @@ folder onto the upload area. The portal picks out the catalog pair and every `.b
 ignores everything else, uploads them in parallel with per-file progress, and skips any
 bundle SusaPlay already has.
 
+Click **Review and publish** to see what the publish would change — files added and removed,
+the catalog version, and each [compatibility check](#compatibility-check). Click **Publish** to
+make it live. If a check fails, the portal shows why and offers no publish button.
+
 ## Upload from CI
 
 The same three shapes work with your developer API key. Sign the whole set in one call,
@@ -118,13 +124,17 @@ curl -sS -X POST "$API/publish" \
 ```
 
 `register-batch` reports what it recorded, what it reused, and anything `missing` because
-its upload never arrived. `publish` promotes the whole staged set to live and returns
-`publishedFiles`, `changedFiles`, `unchangedFiles`, `removedFiles`, and the
-`catalogVersion` now serving.
+its upload never arrived. `publish` promotes the whole staged set to live and returns the new
+`releaseNumber`, `publishedFiles`, `changedFiles`, `unchangedFiles`, `removedFiles`, the
+`catalogVersion` now serving, and `deletedReleases` — older releases that can no longer be
+restored (see [Releases](#releases)).
+
+To review before you publish, see [Plan a publish first](#plan-a-publish-first).
 
 <Note>
 Enabling Addressables and deleting staged files stay in the portal. Your API key covers
-uploading, registering, and publishing.
+uploading, registering, publishing, and rolling back. Uploading and registering need the
+`addressables:write` permission; publishing and rolling back need `addressables:publish`.
 </Note>
 
 ## Only changed bundles move
@@ -134,8 +144,155 @@ live set holds the same bytes. SusaPlay skips the upload and keeps the file it h
 typical incremental Addressables build only the catalog pair and the few bundles you touched
 are transferred and re-cached, which is why publishing is fast even for a large set.
 
-A file that is live but absent from your new set is removed when you publish. Publish the
-complete set every time, not just the changed files.
+A file that is live but absent from your new set stops reaching players when you publish.
+Publish the complete set every time, not just the changed files.
+
+## Releases
+
+Every publish creates a **release**, numbered 1, 2, 3 and so on for each game. A release is
+the catalog pair and the bundles it names. SusaPlay keeps the **three newest releases plus the
+live one**; publishing deletes older releases, and their files once no kept release uses them.
+
+The portal lists the kept releases under **Addressables → Releases**, newest first, with the
+date, the catalog version, the file count and size, and the build that was live when each was
+published. `GET /catalog/game/{gameId}/addressables` returns the same list as `releases`, with
+`liveReleaseId` and `operationInProgress`.
+
+If you published Addressables before releases existed, your current live set becomes release 1
+on your next publish, so you can roll back to it.
+
+## Compatibility check
+
+Before a publish or a rollback changes anything, SusaPlay reads the catalog and checks it
+against your game's live build:
+
+| Check | Fails when |
+| --- | --- |
+| C1 — The live build finds this catalog | The remote catalog the live build requests is not in the set, or the live build requests it from a path other than your Remote Load Path |
+| C2 — Every bundle exists | A bundle the catalog names is neither in the set nor shipped inside the live build |
+| C3 — Bundles load from this game | A remote bundle loads from anywhere other than your Remote Load Path, or from a path with an unresolved `{...}` placeholder |
+| C4 — The catalog can be read | The catalog is missing or is not a binary catalog |
+
+If your game has no live build yet, C1 and the check for bundles inside the build are skipped.
+
+A failed check refuses the request with `409 INCOMPATIBLE_CATALOG`. Nothing changes, and your
+live content keeps serving. `error.compatibility` holds the result:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INCOMPATIBLE_CATALOG",
+    "message": "Publishing would break the live game: …",
+    "compatibility": {
+      "compatible": false,
+      "liveBuild": "1.0.9",
+      "requestedCatalog": "catalog_1.hash",
+      "checks": [
+        { "id": "C1", "status": "failed", "message": "…" },
+        { "id": "C2", "status": "passed", "message": "…" },
+        { "id": "C3", "status": "passed", "message": "…" },
+        { "id": "C4", "status": "passed", "message": "…" }
+      ]
+    }
+  }
+}
+```
+
+Each check's `status` is `passed`, `failed`, `skipped`, or `info`. Only `failed` refuses.
+
+<Tip>
+Most failures come from building the content with different settings than the live build — a
+different Remote Load Path, or a group switched between local and remote. Build the content
+from the same project and profile as the live build, or publish a new build first.
+</Tip>
+
+If you believe a check is wrong, contact [SusaPlay support](mailto:support@susaplay.com).
+
+## Plan a publish first
+
+Send `"dryRun": true` to see what a publish would do without changing anything:
+
+```bash
+curl -sS -X POST "$API/publish" \
+  -H "Authorization: ApiKey $DEVELOPER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"dryRun": true}'
+```
+
+The response holds the plan:
+
+| Field | Meaning |
+| --- | --- |
+| `releaseNumber` | The release this publish would create |
+| `filesAdded`, `filesRemoved`, `filesUnchanged` | How the live set would change |
+| `catalogVersion` | `from` the live catalog version `to` the staged one |
+| `compatibility` | The [compatibility check](#compatibility-check)'s result |
+| `releasesDropped` | Releases the publish would delete |
+| `expectedLiveReleaseId`, `expectedStagingHash` | Send these back with the real publish |
+
+A dry run answers `200` even when a check fails — read `compatibility.compatible`. Send the
+expected values back exactly as the plan returned them: `expectedLiveReleaseId` is a string,
+such as `"4"`, or `null` if your game has no release yet.
+
+To publish exactly what you reviewed, send the two expected values back:
+
+```bash
+curl -sS -X POST "$API/publish" \
+  -H "Authorization: ApiKey $DEVELOPER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"expectedLiveReleaseId": "4", "expectedStagingHash": "9f2c…"}'
+```
+
+If the live release or the staged files changed since the plan — someone else published, or
+uploaded another file — the publish is refused with `409 CONFLICT`. Plan again.
+
+Only one publish or rollback runs per game at a time. A second one gets
+`409 OPERATION_IN_PROGRESS`; wait a few minutes and try again.
+
+## Roll back
+
+Rolling back makes a kept release live again. Use it when a publish passed the checks but the
+content is wrong — a bad level, broken balance data.
+
+In the portal: **Addressables → Releases**, then **Roll back to this release** on the release
+you want. The portal shows the same review as a publish, then rolls back.
+
+From CI, plan first, then roll back:
+
+```bash
+curl -sS -X POST "$API/rollback" \
+  -H "Authorization: ApiKey $DEVELOPER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"releaseId": "3", "dryRun": true}'
+
+curl -sS -X POST "$API/rollback" \
+  -H "Authorization: ApiKey $DEVELOPER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"releaseId": "3", "expectedLiveReleaseId": "4"}'
+```
+
+The response holds `releaseNumber`, `fromReleaseNumber`, `catalogVersion`, `fileCount`, and
+`compatibility`.
+
+A rollback:
+
+- is checked against your **current** live build, like a publish. A release built for an
+  older build may fail C1–C3 if you have since published a new build;
+- creates no new release and keeps the same releases, so undoing it is another rollback, to
+  the newer release;
+- leaves your staged files untouched.
+
+It is refused when:
+
+| Response | Cause |
+| --- | --- |
+| `404 NOT_FOUND` | The release is not kept. Only the three newest releases and the live one can be restored |
+| `409 FAILED_PRECONDITION` | The release is already live |
+| `409 RELEASE_INCOMPLETE` | Files the release needs are gone. The message names them |
+| `409 INCOMPATIBLE_CATALOG` | The release would break the live build |
+| `409 CONFLICT` | The live release changed since you sent `expectedLiveReleaseId` |
+| `409 OPERATION_IN_PROGRESS` | A publish or rollback is already running |
 
 ## Limits
 
@@ -172,3 +329,8 @@ admin reinstates it.
 | `Addressables are not enabled for this game` | Enable them in the portal first |
 | `Staging addressables are not ready to publish` | The set is missing the catalog pair or has no bundle |
 | `Addressables set would hold … over the 1500 file limit` | Split the content or remove unused bundles |
+| `Publishing would break the live game: …` | A [compatibility check](#compatibility-check) failed. The rest of the message says which |
+| `The live release changed since the plan` or `Staging changed since the plan` | Someone published or uploaded after your dry run. Plan again |
+| `Another Addressables publish or rollback is running for this game` | Wait a few minutes and try again |
+| `Release … is not retained` | Only the three newest releases and the live one can be restored |
+| `Release … cannot be restored: Storage no longer has …` | Files the release needs were deleted. Publish the content again instead |

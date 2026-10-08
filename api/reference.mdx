@@ -69,7 +69,11 @@ All timestamps are ISO 8601 strings.
 | `GAME_NOT_FOUND` | 404 | Game key does not match any active game |
 | `VERSION_CONFLICT` | 409 | Cloud save version mismatch |
 | `DUPLICATE` | 409 | Build version id already exists |
-| `FAILED_PRECONDITION` | 409 | Too many builds already waiting for review |
+| `FAILED_PRECONDITION` | 409 | The request does not fit the current state — for example, too many builds already waiting for review, or rolling back to the release that is already live |
+| `CONFLICT` | 409 | The state changed since you planned the request. Plan it again |
+| `INCOMPATIBLE_CATALOG` | 409 | The Addressables content would break the live build. `error.compatibility` holds the check's result |
+| `OPERATION_IN_PROGRESS` | 409 | Another Addressables publish or rollback is running for this game |
+| `RELEASE_INCOMPLETE` | 409 | An Addressables release can no longer be restored because files it needs are gone |
 | `RATE_LIMITED` | 429 | Too many requests |
 | `INTERNAL` | 500 | Unexpected server error |
 

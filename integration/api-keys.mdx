@@ -51,7 +51,7 @@ Each key holds only the permissions you choose when you create it.
 | `analytics:read` | Reading analytics |
 | `builds:write` | Uploading and processing builds |
 | `addressables:write` | Uploading and registering Addressables files in staging |
-| `addressables:publish` | Publishing Addressables staging live |
+| `addressables:publish` | Publishing Addressables staging live, and rolling back to an earlier release |
 
 A request that needs a permission the key does not hold is refused with `403` and the code
 `INSUFFICIENT_SCOPE`. The response names the missing permission in `requiredScope`.
