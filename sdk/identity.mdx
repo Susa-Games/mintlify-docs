@@ -52,12 +52,10 @@ backend as a permanent key without also handling that transition.
 The SDK attaches the player's auth token to every platform request for you. There is no
 `getIdToken` in the Unity SDK, and a game should not need one.
 
-If your game calls **your own** backend, use `SusaPlaySDK.Api` — it signs those requests with the
-player's identity so your server can verify who is calling:
-
-```csharp
-var result = await SusaPlaySDK.Api.Get("/my-endpoint");
-```
+To tell your own server what happens in the game, send a [webhook event](/sdk/webhooks): SusaPlay
+forwards it with the player's id and a signature your server verifies. `SusaPlaySDK.Api` is not
+for your own server — it reaches a partner's API inside a partner embed
+([Api and Backend](/sdk/api-and-backend)).
 
 <Warning>
 Never trust a player id sent from the client. Verify it server-side on every request that grants

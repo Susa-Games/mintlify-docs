@@ -40,7 +40,7 @@ if (result.Success)
 }
 else
 {
-    Debug.LogWarning($"{result.ErrorCode}: {result.ErrorMessage}");
+    Debug.LogWarning(result.Error);
 }
 ```
 
@@ -111,7 +111,7 @@ Not supported. SusaPlay runs on WebGL, and the native store receipt-validation p
 removed. Every real-money purchase goes through the browser checkout described above.
 
 <Note>
-SDK 2.0 renamed the purchase API off the payment provider: `StartXsollaPurchase` is now
+SDK 1.5.0 renamed the purchase API off the payment provider: `StartXsollaPurchase` is now
 `StartPurchase` and `XsollaPurchaseResult` is now `PurchaseResult`, with no deprecated aliases.
-A game built against 1.x needs rebuilding against 2.0.
+A game still using the old names must be updated and rebuilt.
 </Note>

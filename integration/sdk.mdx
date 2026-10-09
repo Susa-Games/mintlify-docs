@@ -95,22 +95,23 @@ Every wallet and inventory mutation happens server-side. The client can never wr
 ## Saves
 
 ```csharp
-// Write — data is any string, usually JSON you serialize yourself
+// Write — data must be JSON text
 var saved = await SusaPlaySDK.CloudSave.Save("main", JsonUtility.ToJson(myState));
-if (saved.success)
+if (saved.Success)
 {
-    Debug.Log($"Saved version {saved.data.version}");
+    Debug.Log($"Saved version {saved.Version}");
 }
 
-// Read
+// Read — an empty slot succeeds with empty Data
 var loaded = await SusaPlaySDK.CloudSave.Load("main");
-if (loaded.success)
+if (loaded.Success && !string.IsNullOrEmpty(loaded.Data))
 {
-    var state = JsonUtility.FromJson<MyState>(loaded.data.data);
+    var state = JsonUtility.FromJson<MyState>(loaded.Data);
 }
 ```
 
-Versioning is handled by the platform. Slot size is capped at 500 KB.
+Versioning is handled by the platform. A slot holds at most 500,000 characters. See
+[Saves](/sdk/saves).
 
 ## Analytics
 
@@ -131,7 +132,7 @@ Check it.
 var result = await SusaPlaySDK.Purchases.SpendPlatformWallet("sword_of_fire");
 if (!result.Success)
 {
-    Debug.LogWarning($"Spend failed: {result.ErrorCode} — {result.ErrorMessage}");
+    Debug.LogWarning($"Spend failed: {result.Error}");
 }
 ```
 

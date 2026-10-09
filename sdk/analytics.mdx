@@ -64,9 +64,12 @@ Analytics are available in:
 - Developer Portal → your game → **Analytics** (session DAU, revenue, retention)
 - Raw event export — for running your own queries (contact SusaPlay to enable)
 
-## Event naming rules
+## Event naming
 
-- Snake\_case only: `level_start` not `LevelStart`
-- Max 40 characters
-- No PII (no email, name, phone)
-- Max 25 custom params per event
+- Use snake\_case: `level_start`, not `LevelStart`. Keep names short and stable — a renamed event
+  starts a new series.
+- Never put personal data (email, name, phone) in names or parameters.
+- An event without a name is dropped.
+- `level_up` is reserved: it reports the player's level and needs a non-negative integer `level`
+  parameter, such as `"{\"level\":7}"`. Without one the event is dropped and the rest of the
+  batch is kept.

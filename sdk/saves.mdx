@@ -3,22 +3,27 @@ title: "Saves"
 description: "Cloud save read and write"
 ---
 
-Cloud saves are keyed by slot. Data is an opaque string — serialize it yourself, usually as
-JSON. The platform stores the payload and tracks its version for you.
+Cloud saves are kept per player and per game, in named slots. The data is JSON text that you
+serialize yourself — usually with `JsonUtility.ToJson`. The platform stores it and tracks its
+version for you.
 
 ## Read
 
 ```csharp
 var loaded = await SusaPlaySDK.CloudSave.Load("main");
 
-if (loaded.success)
+if (loaded.Success && !string.IsNullOrEmpty(loaded.Data))
 {
-    var state = JsonUtility.FromJson<MyState>(loaded.data.data);
-    Debug.Log($"Loaded version {loaded.data.version}, saved at {loaded.data.savedAt}");
+    var state = JsonUtility.FromJson<MyState>(loaded.Data);
+    Debug.Log($"Loaded version {loaded.Version}");
+}
+else if (loaded.Success)
+{
+    // Nothing saved in this slot yet — start a fresh game.
 }
 else
 {
-    // No save in this slot yet — start a fresh game.
+    Debug.LogWarning($"Load failed: {loaded.Error}");
 }
 ```
 
@@ -26,29 +31,40 @@ else
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `success` | `bool` | False when the slot is empty or the read failed |
-| `data.slot` | `string` | Slot name you requested |
-| `data.data` | `string` | Your serialized payload |
-| `data.version` | `int` | Increments on every successful write |
-| `data.savedAt` | `string` | ISO-8601 timestamp |
+| `Success` | `bool` | False only when the read failed |
+| `Data` | `string` | The JSON text you saved. Empty when the slot has never been written |
+| `Version` | `int` | Increments on every successful write. `0` for an empty slot |
+| `Error` | `string` | Why the read failed |
+
+<Note>
+An empty slot is not a failure: `Success` is `true`, `Data` is empty and `Version` is `0`. Check
+`Data` to tell a new player from a returning one.
+</Note>
 
 ## Write
 
 ```csharp
-var payload = JsonUtility.ToJson(myState);
-var saved = await SusaPlaySDK.CloudSave.Save("main", payload);
+var saved = await SusaPlaySDK.CloudSave.Save("main", JsonUtility.ToJson(myState));
 
-if (saved.success)
+if (saved.Success)
 {
-    Debug.Log($"Now at version {saved.data.version}");
+    Debug.Log($"Now at version {saved.Version}");
 }
 ```
 
-You do not pass a version. The platform assigns the next one and returns it.
+`SaveResult` has `Success`, `Version` and `Error`.
+
+<Warning>
+`data` must be valid JSON — the SDK sends it as a JSON value, not as a quoted string. Pass the
+output of `JsonUtility.ToJson`. A plain string such as `hello` makes the request invalid, and empty
+data is refused.
+</Warning>
+
+You do not pass a version. The SDK remembers the slot's last version and sends it with the write.
 
 ## Multiple slots
 
-Slots are independent — use them to separate concerns that change at different rates.
+Slots are independent — use them to separate data that changes at different rates.
 
 ```csharp
 await SusaPlaySDK.CloudSave.Save("progress", progressJson);
@@ -57,18 +73,22 @@ await SusaPlaySDK.CloudSave.Save("settings", settingsJson);
 
 ## Concurrency
 
-Writes are applied inside a server-side transaction, so two sessions writing the same slot
-cannot corrupt each other — the later write wins and gets the higher version.
+Writes to one slot are queued: if the game saves again while a write is in flight, the calls are
+merged into the next write, which carries the newest data. Writes to a slot are at least two
+seconds apart.
 
-The SDK does not surface a merge hook. If your game can run in two tabs at once and you need
-last-write-wins to be smarter than that, read before writing and merge in your own code.
+If another tab or device saved the slot first, the server answers `409 VERSION_CONFLICT`. The SDK
+then reads the slot to pick up its version and writes again, up to three attempts — the last write
+wins. The SDK has no merge hook; if your game can run in two tabs and needs more than
+last-write-wins, read before writing and merge in your own code.
 
 ## Limits
 
-- 500 KB per slot
-- Payloads above the limit are rejected server-side
+- 500,000 characters per slot
+- Larger payloads are refused by the server
 
 ## When a write fails
 
-`success` is false. Common causes: payload too large, the player's session expired, or the shell
-stopped responding. Keep the unsaved state in memory and retry rather than discarding progress.
+`Success` is false and `Error` says why. Common causes: the payload is too large, the player's
+session expired, or the page stopped responding. Keep the unsaved state in memory and try again
+rather than discarding progress.
