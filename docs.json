@@ -22,6 +22,7 @@
         "pages": [
           "integration/register-game",
           "integration/api-keys",
+          "integration/ai-tools",
           "integration/sdk",
           "integration/economy",
           "integration/saves",

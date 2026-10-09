@@ -1,0 +1,142 @@
+---
+title: "AI Tools"
+description: "Let Claude Code, Cursor and other AI coding assistants integrate the SDK, check your Unity project, and publish builds and Addressables"
+---
+
+SusaPlay's AI tools let an AI coding assistant work on your Unity WebGL game with SusaPlay's own
+rules: integrate the SDK, check the project's settings, inspect and publish builds, upload and
+publish Addressables, and read your games and analytics.
+
+They come in three parts:
+
+| Part | What it gives the assistant |
+| --- | --- |
+| **Skills** | How SusaPlay works: the SDK's modules, publishing, Addressables, analytics |
+| **The SusaPlay MCP server** | Tools that read your games, check projects and builds, and publish — using your developer API key |
+| **The docs server** | Search over this documentation, at `https://docs.susaplay.com/mcp` |
+
+The source is public at [github.com/Susa-Games/susaplay-ai](https://github.com/Susa-Games/susaplay-ai).
+
+## Requirements
+
+- **Node.js 20 or later.** The MCP server runs on your machine with Node.js.
+- **A developer API key** for the tools that call SusaPlay. Without one, the skills, the docs
+  server and the local checks still work.
+
+## Create a key for the assistant
+
+In the Developer Portal → **API Keys**, create a key with one of these presets
+([API Keys](/integration/api-keys)):
+
+| Preset | The assistant can |
+| --- | --- |
+| **AI assistant** (recommended) | Read your games and analytics, check projects and builds, upload builds, stage Addressables |
+| **AI assistant with live publishing** | All of the above, and publish or roll back Addressables — which changes what players download |
+
+Name the key after the machine and tool, such as "Claude Code — laptop", so you can revoke it
+alone.
+
+<Warning>
+Never paste an API key into a chat with an assistant. Set it in the tool's settings as shown below.
+If a key ever reaches a chat, revoke it in the portal and create a new one.
+</Warning>
+
+## Claude Code
+
+Install the SusaPlay plugin — skills, the MCP server and the docs server together. In a Claude
+Code session:
+
+```text
+/plugin install susaplay --marketplace Susa-Games/susaplay-ai
+```
+
+On Claude Code older than 2.1.275, add the marketplace first:
+
+```text
+/plugin marketplace add Susa-Games/susaplay-ai
+/plugin install susaplay@susaplay
+```
+
+Claude Code asks for your SusaPlay API key during the install and keeps it in your system's
+credential store. To change it later, run `/plugin configure susaplay`.
+
+Check the install with `/mcp`: `susaplay` and `susaplay-docs` should be connected.
+
+<Note>
+Claude Code does not update plugins from a third-party marketplace automatically. Turn it on in
+`/plugin` → **Marketplaces** → `susaplay` → **Enable auto-update**, or update by hand with
+**Update marketplace** there.
+</Note>
+
+## Cursor and other tools
+
+Add the MCP server to the tool's MCP configuration. For Cursor, in `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "susaplay": {
+      "command": "npx",
+      "args": ["-y", "@susaplay/mcp"],
+      "env": { "SUSAPLAY_API_KEY": "<your key>" }
+    },
+    "susaplay-docs": { "url": "https://docs.susaplay.com/mcp" }
+  }
+}
+```
+
+Use the file in your home folder, not a `.cursor/mcp.json` inside a project, so the key is never
+committed. On Windows, if the server does not start, use `"command": "cmd"` with
+`"args": ["/c", "npx", "-y", "@susaplay/mcp"]`.
+
+This gives the tools and the docs, without the skills. The skills are plain `SKILL.md` folders in
+[`plugins/susaplay/skills`](https://github.com/Susa-Games/susaplay-ai/tree/main/plugins/susaplay/skills)
+that tools supporting the open skills format can load.
+
+## What the assistant can do
+
+| Tool | What it does | Changes anything |
+| --- | --- | --- |
+| `list_games` | Your games: what is live, the latest build, Addressables, the game key | No |
+| `get_game` | One game with every build, and which old builds the next upload would delete | No |
+| `get_addressables` | Live and staged Addressables, and the releases kept for rollback | No |
+| `get_analytics` | Daily and 30-day active players, D1/D7/D30 retention. No revenue | No |
+| `check_project` | Checks the Unity project's SDK and Addressables settings | No |
+| `inspect_build` | Checks a WebGL build against the upload rules and its Addressables catalog | No |
+| `sync_simulator_config` | Writes your game's configuration for the [Editor Simulator](/sdk/editor-simulator) into the project | The project file only |
+| `publish_build` | Uploads a build: into review, or as `ready` for a private game | A new build; [retention](/integration/builds#build-retention) may delete old ones |
+| `create_preview_link` | A single-use, 30-minute link to play a build in review or `ready` | A preview session |
+| `upload_addressables` | Uploads Addressables content to staging | Staging only — players see nothing |
+| `plan_addressables_publish` | Shows what a publish would change and runs the [compatibility check](/integration/addressables#compatibility-check) | No |
+| `publish_addressables` | Makes staging live for every player | **Yes — immediately** |
+| `rollback_addressables` | Makes a kept release live again | **Yes — immediately** |
+
+The assistant is told to show you the plan and get your confirmation before it publishes or rolls
+back Addressables. The server refuses content that would break your live build either way.
+
+Not available to an assistant, on purpose: registering a game, enabling Addressables, deleting
+builds or staged files, webhooks and their secrets, economy settings, API keys, and **Request
+public**. Those stay in the Developer Portal.
+
+## Try it
+
+Open your Unity project in the assistant and ask, for example:
+
+- "Check this project's SusaPlay setup."
+- "Add SusaPlay cloud saves to my save system."
+- "Publish my WebGL build in `Builds/WebGL` as the next version of my game."
+- "Upload my Addressables content and show me the publish plan."
+
+## Troubleshooting
+
+| You see | Do this |
+| --- | --- |
+| The server fails to start, or `node` is not found | Install Node.js 20 or later and restart the tool |
+| "No SusaPlay API key is set" | Set the key: `/plugin configure susaplay` in Claude Code, or `SUSAPLAY_API_KEY` in the MCP configuration |
+| "SusaPlay did not accept the API key" | The key is wrong or revoked, or from before October 2026. Create a new one |
+| "This API key does not have the … permission" | Create a key with a preset that has it — publishing Addressables needs **AI assistant with live publishing** |
+| "Too many requests with this API key" | The key went over a [rate limit](/integration/api-keys#limits). Wait the number of seconds given |
+| A tool is missing from `/mcp` in Claude Code | Run `/plugin` → **Installed** → `susaplay` and check it is enabled, then `/reload-plugins` |
+
+Report problems at
+[github.com/Susa-Games/susaplay-ai/issues](https://github.com/Susa-Games/susaplay-ai/issues).
