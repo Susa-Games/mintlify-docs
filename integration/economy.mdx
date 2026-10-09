@@ -40,7 +40,7 @@ currency_1    Bad — meaningless, invites renaming later
 | --- | --- | --- |
 | ID | Yes | Stable item identifier |
 | Name | Yes | Display name |
-| Type | Yes | `durable` (owned forever) or `consumable` (used once) |
+| Type | No | `durable` (owned forever, the default) or `consumable` (used once) |
 | Price currency | Yes | Must match a configured currency ID |
 | Price amount | Yes | Cost in that currency |
 | Provider SKU | No | The identifier this item is sold under at the payment provider. Required only if the item is sold for real money; the platform resolves it at checkout |

@@ -14,7 +14,7 @@ var result = await SusaPlaySDK.Ads.ShowRewarded();
 
 if (result.Rewarded)
 {
-    // The reward is already in the player's wallet. Update your UI.
+    // Credited by the platform (held for a guest until they sign in). Update your UI.
 }
 else if (result.Success)
 {

@@ -13,9 +13,9 @@ description: "SusaPlay SDK — installation, modules, and initialization"
 Unity is the only SDK today. There is no JavaScript or TypeScript package.
 </Note>
 
-Games run as WebGL builds inside the SusaPlay shell. The SDK communicates with the platform
-through that shell rather than calling the API directly, so the same code works in production
-and in the developer preview.
+Games run as WebGL builds inside the SusaPlay shell. The shell starts the SDK, supplies the
+player's token, and runs checkout and ads; other calls go straight to `api.susaplay.com` with
+that token. The same code works in production and in the developer preview.
 
 ## Installation
 
@@ -79,7 +79,8 @@ public class Bootstrap : MonoBehaviour
 
 <Warning>
 Await `Initialize()` before touching any module. The properties are null until it completes,
-and a second call while the first is still running is ignored.
+and a second call returns the same task. If initialization times out, `Initialize()` completes
+without throwing and the modules stay null; call it again to retry.
 </Warning>
 
 If the shell does not respond within 15 seconds, initialization logs an error and gives up.

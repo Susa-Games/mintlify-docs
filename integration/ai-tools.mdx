@@ -30,7 +30,7 @@ In the Developer Portal → **API Keys**, create a key with one of these presets
 
 | Preset | The assistant can |
 | --- | --- |
-| **AI assistant** (recommended) | Read your games and analytics, check projects and builds, upload builds, stage Addressables |
+| **AI assistant** (recommended) | Read your games and analytics, check projects and builds, upload builds, stage Addressables and show the publish plan |
 | **AI assistant with live publishing** | All of the above, and publish or roll back Addressables — which changes what players download |
 
 Name the key after the machine and tool, such as "Claude Code — laptop", so you can revoke it
@@ -68,9 +68,29 @@ Claude Code does not update plugins from a third-party marketplace automatically
 **Update marketplace** there.
 </Note>
 
-## Cursor and other tools
+## Cursor
 
-Add the MCP server to the tool's MCP configuration. For Cursor, in `~/.cursor/mcp.json`:
+The SusaPlay plugin for Cursor brings the same skills and both servers. It is waiting for review
+in the Cursor Marketplace; until it is listed, install it locally:
+
+```bash
+git clone https://github.com/Susa-Games/susaplay-ai.git
+mkdir -p ~/.cursor/plugins/local
+ln -s "$PWD/susaplay-ai/plugins/susaplay" ~/.cursor/plugins/local/susaplay
+```
+
+On Windows, copy the `plugins/susaplay` folder to `%USERPROFILE%\.cursor\plugins\local\susaplay`
+instead of linking it. Then run **Developer: Reload Window** and check **Customize**: the four
+skills and the two MCP servers should appear. `git pull` in `susaplay-ai` updates the plugin.
+
+The key is the plugin variable `SUSAPLAY_API_KEY`. On a Teams or Enterprise plan, an admin turns
+on **Allow Local Plugin Imports** and sets the variable in the Cursor dashboard under
+**Plugins → Configure**. After setting it, quit Cursor completely and open it again.
+
+## Other tools
+
+Add the MCP server to the tool's MCP configuration. For Cursor without the plugin, in
+`~/.cursor/mcp.json`:
 
 ```json
 {
@@ -115,8 +135,8 @@ The assistant is told to show you the plan and get your confirmation before it p
 back Addressables. The server refuses content that would break your live build either way.
 
 Not available to an assistant, on purpose: registering a game, enabling Addressables, deleting
-builds or staged files, webhooks and their secrets, economy settings, API keys, and **Request
-public**. Those stay in the Developer Portal.
+staged files, webhooks and their secrets, economy settings, API keys, and **Request public**.
+Those stay in the Developer Portal.
 
 ## Try it
 

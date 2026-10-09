@@ -29,7 +29,7 @@ var response = await SusaPlaySDK.Achievements.Unlock("first_win");
 ```
 
 Unlocking is safe to repeat. A second unlock of the same achievement awards nothing and changes
-nothing; its `newlyUnlocked` is `false`.
+nothing; its `newlyUnlocked` is `false`, and `points` still shows the achievement's value.
 
 ## Increment
 

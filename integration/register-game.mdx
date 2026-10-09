@@ -20,7 +20,6 @@ Go to [dev.susaplay.com](https://dev.susaplay.com) → **Register Game**.
 | Name | Public-facing title shown in the developer catalog |
 | Description | Required. Summary for reviewers — mention gameplay loop and target audience. A public game needs at least 200 characters before it can go public |
 | Thumbnail | Required. JPEG, PNG, or WebP, under 5 MB — shown on the game's card. Replace it later from the Overview tab |
-| Platforms | Select every platform you plan to support (WebGL, iOS, Android) |
 | Genre | Used for internal filtering — pick the closest fit |
 | Distribution | `Public` or `B2B` — determines who can access the game shell |
 
@@ -36,16 +35,18 @@ After registration, a game key is generated:
 gk_xxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-<Warning>
-  Copy this immediately. It is shown only once. If you lose it, generate a new key from Settings → API Keys.
-</Warning>
+The game key is always shown on the game's **Overview** tab. It is public by design: it ships in
+every build and only identifies the game, so it cannot be regenerated. It is not a secret — the
+secret credential is your [developer API key](/integration/api-keys).
+
+SusaPlay runs WebGL games only, so there is no platform to choose.
 
 You can tick **Upload the first build now** to go straight to the Builds tab, or upload it later.
 
 ### 4. Add screenshots
 
-Before requesting release review, add up to 3 screenshots showing real gameplay — JPEG, PNG, or
-WebP, under 5 MB each.
+Add up to 3 screenshots showing real gameplay — JPEG, PNG, or WebP, under 5 MB each. They are not
+required to request going public, but reviewers look for them.
 
 SVG is rejected. To add a fourth screenshot you have to delete an existing one first.
 

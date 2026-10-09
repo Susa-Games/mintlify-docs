@@ -10,10 +10,16 @@ description: "Create developer API keys with only the permissions each tool need
 | Game key | SDK init inside the game client | Game binary / env |
 | Developer API key | CI/CD build and Addressables uploads | Pipeline secrets, your tool's credential settings |
 
-Send the developer API key as `Authorization: ApiKey {key}` — not as a bearer token. It
-works on the [build upload](/integration/builds#upload-via-ci-cd) endpoints and on the
-[Addressables](/integration/addressables#upload-from-ci) upload and publish endpoints, for the
-games you own, within the permissions the key was created with.
+Send the developer API key as `Authorization: ApiKey {key}` — not as a bearer token. It works,
+for the games you own and within the permissions the key was created with, on:
+
+- reading your games, their versions, their Addressables state and their
+  [Editor Simulator](/sdk/editor-simulator) configuration;
+- the analytics dashboard;
+- the [build upload](/integration/builds#upload-via-ci-cd) endpoints, and preview and share links
+  for a build;
+- the [Addressables](/integration/addressables#upload-from-ci) upload, publish and rollback
+  endpoints.
 
 Developer API keys start with `spdk_`.
 
@@ -33,13 +39,10 @@ Never hardcode the key in a script. Anything compiled into a WebGL build is read
 who opens the browser devtools, so treat the game key as public — it is scoped to a single game
 and grants nothing beyond it.
 
-**Separate production and test keys.** Keep a separate `PlatformConfig` asset per environment and
-swap it at build time, so a test build can never talk to production:
-
-```text
-Assets/SusaPlay/PlatformConfig.asset          # production
-Assets/SusaPlay/PlatformConfig.staging.asset  # staging
-```
+Each game has one game key, and there is no separate staging environment for games. The SDK
+loads the config only from `Assets/Resources/PlatformConfig.asset`; an asset anywhere else is
+not found. To test before players see a build, keep the game private or use
+[Preview and Share](/integration/release-review) links.
 
 ## Permissions
 
@@ -47,10 +50,10 @@ Each key holds only the permissions you choose when you create it.
 
 | Permission | Allows |
 | --- | --- |
-| `games:read` | Reading your games, their versions and their Addressables state |
+| `games:read` | Reading your games, their versions, their Addressables state and their Editor Simulator configuration |
 | `analytics:read` | Reading analytics |
-| `builds:write` | Uploading and processing builds |
-| `addressables:write` | Uploading and registering Addressables files in staging |
+| `builds:write` | Uploading builds, checking a build's processing status, and creating preview and share links |
+| `addressables:write` | Uploading and registering Addressables files in staging, and planning a publish or rollback (`dryRun`) |
 | `addressables:publish` | Publishing Addressables staging live, and rolling back to an earlier release |
 
 A request that needs a permission the key does not hold is refused with `403` and the code

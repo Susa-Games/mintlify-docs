@@ -134,7 +134,8 @@ To review before you publish, see [Plan a publish first](#plan-a-publish-first).
 <Note>
 Enabling Addressables and deleting staged files stay in the portal. Your API key covers
 uploading, registering, publishing, and rolling back. Uploading and registering need the
-`addressables:write` permission; publishing and rolling back need `addressables:publish`.
+`addressables:write` permission, as does planning (`dryRun`); publishing and rolling back need
+`addressables:publish`.
 </Note>
 
 ## Only changed bundles move
@@ -225,7 +226,9 @@ The response holds the plan:
 | Field | Meaning |
 | --- | --- |
 | `releaseNumber` | The release this publish would create |
-| `filesAdded`, `filesRemoved`, `filesUnchanged` | How the live set would change |
+| `filesAdded`, `filesRemoved` | Files the publish would add or take away |
+| `filesChanged` | Files on both sides whose content is replaced — the catalogs |
+| `filesUnchanged` | Bundles already live and kept as they are |
 | `catalogVersion` | `from` the live catalog version `to` the staged one |
 | `compatibility` | The [compatibility check](#compatibility-check)'s result |
 | `releasesDropped` | Releases the publish would delete |
@@ -272,15 +275,17 @@ curl -sS -X POST "$API/rollback" \
   -d '{"releaseId": "3", "expectedLiveReleaseId": "4"}'
 ```
 
-The response holds `releaseNumber`, `fromReleaseNumber`, `catalogVersion`, `fileCount`, and
+With `dryRun`, the response is the plan: `filesAdded`, `filesRemoved`, `filesChanged`,
+`filesUnchanged`, `catalogVersion`, `compatibility` and `expectedLiveReleaseId`. The real rollback
+answers with `releaseNumber`, `fromReleaseNumber`, `catalogVersion`, `fileCount`, and
 `compatibility`.
 
 A rollback:
 
 - is checked against your **current** live build, like a publish. A release built for an
   older build may fail C1–C3 if you have since published a new build;
-- creates no new release and keeps the same releases, so undoing it is another rollback, to
-  the newer release;
+- creates no new release, so undoing it is another rollback, to the newer release. The release
+  you roll away from stays only if it is among the three newest;
 - leaves your staged files untouched.
 
 It is refused when:
@@ -314,8 +319,8 @@ changed bundle gets a new filename.
 ## If your content is suspended
 
 SusaPlay can suspend a game's Addressables — a kill switch for broken or unsafe remote
-content. While suspended, player requests for your bundles return `403` and the base build
-keeps running. The portal shows the reason. Uploading and publishing are blocked until an
+content. While suspended, player requests that are not already cached at the edge fail, and the
+base build keeps running. The portal shows the reason. Uploading and publishing are blocked until an
 admin reinstates it.
 
 ## Troubleshooting

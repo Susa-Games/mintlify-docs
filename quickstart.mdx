@@ -1,18 +1,19 @@
 ---
 title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+description: "Register a game, add the SDK and play your first WebGL build"
 ---
 
 ## Prerequisites
 
 - A SusaPlay developer account ([register at dev.susaplay.com](https://dev.susaplay.com))
-- Your game built for WebGL, iOS, or Android
+- A Unity game you can build for WebGL — SusaPlay runs WebGL games only
 
 ## Step 1 — Register your game
 
 1. Open [Developer Portal → Register Game](https://dev.susaplay.com/games/new)
-2. Fill in name, description, thumbnail and target platforms
-3. **Copy the game key immediately** — it is shown only once
+2. Fill in name, description and thumbnail
+3. Copy the game key. It is always on the game's **Overview** tab, and it is public by design:
+   it ships in every build and only identifies the game
 
 A Public game starts private — only you can play it until SusaPlay approves its
 [public request](/integration/release-review#private-games).
@@ -60,8 +61,9 @@ var wallet = await SusaPlaySDK.Purchases.GetPlatformWallet();
 Debug.Log($"Wallet: {wallet.Success}");
 ```
 
-Build for WebGL, upload it, and open the game from the Developer Portal. If the console shows
-the player name and a wallet response, you are connected.
+Build for WebGL and upload it on the game's **Builds** tab. When processing finishes, click
+**Preview** on the build's row. If the console shows the player name and a wallet response, you
+are connected.
 
 ## Next steps
 

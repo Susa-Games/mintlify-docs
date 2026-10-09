@@ -73,14 +73,22 @@ var packs = await SusaPlaySDK.Purchases.GetTopupPacks();
 | Field | Type | Notes |
 | --- | --- | --- |
 | `Success` | `bool` | True only when payment completed and rewards were credited |
-| `Status` | `string` | `paid`; `canceled` or `dismissed` (the player canceled or closed checkout); `auth-dismissed` (a guest declined to sign in); `token-failed` (checkout could not start — `ErrorMessage` says why); `timeout` |
+| `Status` | `string` | `paid` (or the provider's `done` or `successful`); `invalid-request` (no item or pack ID); `canceled` or `dismissed` (the player canceled or closed checkout); `auth-dismissed` (a guest declined to sign in); `token-failed` (checkout could not start — `ErrorMessage` says why); `timeout` |
 | `WalletScope` | `string` | `live` or `sandbox` — which wallet the balance landed in. Empty when checkout never opened |
 | `Wallet` | object | Game wallet balance after the transaction |
 | `PlatformWallet` | object | Platform wallet balance after the transaction |
 | `ErrorCode`, `ErrorMessage` | `string` | Populated on failure |
 
 A durable item the player already owns is refused before checkout opens: `token-failed`, with
-`ErrorMessage` "Durable item is already owned". Check the inventory before offering it.
+`ErrorMessage` "Durable item is already owned". Check the inventory before offering it:
+
+```csharp
+var inventory = await SusaPlaySDK.Purchases.GetInventory(); // Items, Consumables
+var used = await SusaPlaySDK.Purchases.ConsumeItem("health_potion", quantity: 1);
+```
+
+`SpendPlatformWallet` and `ConsumeItem` take an optional `requestId`: retrying with the same one
+never charges or consumes twice.
 
 The purchase call waits up to three minutes — a player has to move through a real checkout. Show
 a waiting state rather than blocking input.
@@ -93,7 +101,7 @@ next session rather than assuming a cancelled checkout means no charge.
 
 ## Sandbox
 
-Every purchase method takes a `sandbox` flag, which **requests** the test lane:
+Every checkout method (`StartPurchase`, `StartDirectItemPurchase`, `StartWalletTopupPurchase`) takes a `sandbox` flag, which **requests** the test lane:
 
 ```csharp
 await SusaPlaySDK.Purchases.StartDirectItemPurchase("starter_pack", sandbox: true);

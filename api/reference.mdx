@@ -9,20 +9,33 @@ description: "Base URL, authentication, response format, and error codes"
 https://api.susaplay.com
 ```
 
+`api.susaplay.com` serves these route prefixes: `/catalog`, `/publicCatalog`, `/save`,
+`/engagement`, `/analytics`, `/webhooks`, `/ai`, `/partners`, `/widgets`, and the SDK's
+`/economy` routes. Other routes are served at
+`https://europe-west1-susaplay-2e8e3.cloudfunctions.net/{function}`.
+
 ## Authentication
 
-All endpoints require a Firebase ID token unless marked `[PUBLIC]` or `[DEV_KEY]`.
+Player and developer calls send a bearer token: a Firebase ID token, or the SusaPlay
+game-session token the SDK uses.
 
 ```bash
-Authorization: Bearer {firebase_id_token}
+Authorization: Bearer {token}
 ```
 
-Build upload and Addressables endpoints also accept a developer API key, for pipelines
-that cannot hold a Firebase session:
+When App Check is enforced, player routes also need an `X-Firebase-AppCheck` header; the
+SusaPlay page supplies it.
+
+Developer endpoints — reading games, versions, Addressables and analytics, build uploads,
+preview links, and Addressables upload, publish and rollback — also accept a developer API key,
+for pipelines and AI tools:
 
 ```bash
 Authorization: ApiKey {developer_api_key}
 ```
+
+A key holds some of five permissions: `games:read`, `analytics:read`, `builds:write`,
+`addressables:write` and `addressables:publish`. See [API Keys](/integration/api-keys).
 
 Partner endpoints use a partner key:
 
@@ -53,7 +66,7 @@ Authorization: PartnerKey {partner_key}
 }
 ```
 
-All timestamps are ISO 8601 strings.
+Timestamps are ISO 8601 strings, except `expiresAt` fields, which are Unix seconds.
 
 ## Error codes
 
@@ -63,18 +76,27 @@ All timestamps are ISO 8601 strings.
 | `UNAUTHORIZED` | 403 | Authenticated but not permitted |
 | `NOT_FOUND` | 404 | Resource does not exist |
 | `INVALID_ARGUMENT` | 400 | Missing or malformed request body |
-| `INSUFFICIENT_BALANCE` | 400 | Not enough currency to complete spend |
-| `DUPLICATE_PURCHASE` | 400 | Receipt already validated |
-| `INVALID_RECEIPT` | 400 | Apple/Google rejected the receipt |
-| `GAME_NOT_FOUND` | 404 | Game key does not match any active game |
+| `FORBIDDEN` | 403 | The token is scoped to another game |
+| `INSUFFICIENT_SCOPE` | 403 | The API key lacks the permission named in `error.requiredScope` |
+| `APP_CHECK_FAILED` | 401 | Missing or invalid App Check token |
+| `INSUFFICIENT_BALANCE` | 409 | Not enough currency to complete spend |
+| `INSUFFICIENT_ITEMS` | 409 | Not enough of a consumable to use |
+| `DUPLICATE_ITEM` | 409 | A durable item the player already owns |
+| `ITEM_NOT_FOUND` | 404 | No store item with that ID |
+| `TOPUP_PACK_NOT_FOUND` | 404 | No top-up pack with that ID |
+| `DUPLICATE_PURCHASE` | 409 | This rewarded-ad completion was already credited |
+| `ADS_DISABLED` | 403 | Ads are turned off for the game |
+| `AD_REWARD_COOLDOWN`, `AD_REWARD_LIMIT_REACHED` | 429 | Rewarded-ad cooldown or daily maximum |
+| `GAME_NOT_FOUND` | 404 | The gameId or game key does not match any game |
 | `VERSION_CONFLICT` | 409 | Cloud save version mismatch |
 | `DUPLICATE` | 409 | Build version id already exists |
-| `FAILED_PRECONDITION` | 409 | The request does not fit the current state — for example, too many builds already waiting for review, or rolling back to the release that is already live |
+| `FAILED_PRECONDITION` | 400, 403, 409 | The request does not fit the current state — for example, too many builds already waiting for review, or rolling back to the release that is already live |
 | `CONFLICT` | 409 | The state changed since you planned the request. Plan it again |
 | `INCOMPATIBLE_CATALOG` | 409 | The Addressables content would break the live build. `error.compatibility` holds the check's result |
 | `OPERATION_IN_PROGRESS` | 409 | Another Addressables publish or rollback is running for this game |
 | `RELEASE_INCOMPLETE` | 409 | An Addressables release can no longer be restored because files it needs are gone |
-| `RATE_LIMITED` | 429 | Too many requests |
+| `RATE_LIMITED`, `TOO_MANY_REQUESTS` | 429 | Too many requests. `RATE_LIMITED` carries a `Retry-After` header |
+| `PARTNER_API_UNAVAILABLE`, `PAYLOAD_TOO_LARGE` | 502 | A partner's API did not answer, or answered too much |
 | `INTERNAL` | 500 | Unexpected server error |
 
 ## CORS

@@ -27,13 +27,18 @@ SusaPlaySDK.Analytics.LogEvent(
 ## Flushing
 
 Queued events are sent in batches. With the default configuration the SDK flushes on
-initialization, every five minutes, and when the game is paused.
+initialization, every five minutes, when the game is paused, and on quit. Only signed-in players'
+events are stored; a guest's are refused.
 
 Force a send at a moment that matters — for example right after a tutorial completes:
 
 ```csharp
 await SusaPlaySDK.Analytics.Flush();
 ```
+
+In a WebGL build, `Flush()` returns once the events are handed to the page, not once they are
+stored. The server refuses a batch of more than 500 events whole, so flush before the queue grows
+that large.
 
 Flush intervals and lifecycle triggers are configurable on the `PlatformConfig` asset. The
 minimum interval is 10 seconds.

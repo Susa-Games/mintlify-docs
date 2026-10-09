@@ -10,7 +10,7 @@ A game registered for the Public catalog starts **private**. Nobody else can fin
 - Its builds are processed to `ready` instead of `pending_review`. They are not sent for
   review and do not count toward the review limit.
 - You play them from the Developer Portal: **Builds → Preview** opens a 30-minute link,
-  **Share** creates a 30-day link anyone on your team can open.
+  **Share** creates a 30-day link that anyone who has it can open, without signing in.
 
 When the game is ready, use **Request public** at the top of the game page. Choose one `ready`
 WebGL build. The request needs:
@@ -60,11 +60,11 @@ Watch ad → verify reward credited
 
 | Reason | Fix |
 | --- | --- |
-| Upload rejected outright | Zip is missing `index.html` or a `*.loader.js` file |
+| Build shows `failed` | Zip is missing `index.html` or a `*.loader.js` file — `failure.message` says which |
 | Black screen on load | Check the browser console — usually a missing `Build/` asset |
 | Purchases not working | Verify item IDs match your economy config exactly |
 | Auth loop | Test with a fresh account, not a dev account |
-| Missing screenshots | Add at least one screenshot before submitting |
+| Missing screenshots | Not required to submit, but reviewers expect at least one showing real gameplay |
 | Broken on mobile | Test on an actual device, not just a desktop browser |
 
 ## After rejection

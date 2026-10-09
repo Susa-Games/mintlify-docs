@@ -5,17 +5,18 @@ description: "Receive real-time platform events on your backend server"
 
 ## Overview
 
-Webhooks deliver platform events (builds going live, purchases, analytics) to your backend via HTTP POST. Your server must respond within 5 seconds.
+Webhooks deliver platform events (builds, analytics events and your game's own events) to your backend via HTTP POST. Your server must respond within 5 seconds.
 
 ## Create a webhook endpoint
 
-Developer Portal → your game → **Webhooks → Add Endpoint**
+Developer Portal → **Webhooks** → pick the game → **Add Webhook**
 
 | Field | Notes |
 | --- | --- |
 | URL | Your HTTPS endpoint — must be publicly reachable |
-| Secret | Used to sign requests — store securely, never commit |
-| Events | Select which events to receive |
+| Secret | Used to sign requests — store securely, never commit. Leave it empty and one is generated |
+| Events | Select which events to receive — at least one |
+| Security headers | Optional: up to 10 custom headers sent with every delivery |
 
 ## Available events
 
@@ -31,7 +32,7 @@ Developer Portal → your game → **Webhooks → Add Endpoint**
 | `CUSTOM_WEBHOOK_EVENT` | Event your game sent via `SusaPlaySDK.Webhooks.SendEvent` |
 
 Any other event name is silently dropped when you save the subscription — check the saved list
-in the portal to confirm what was accepted.
+in the portal to confirm what was accepted. A list with no valid event is refused.
 
 ## Body
 
@@ -107,10 +108,11 @@ The signing secret is shown **once**, when you create the webhook. It cannot be 
 afterwards — the portal only shows its last four characters. Store it in your own secret manager
 at creation time.
 
-If you lose it, or if you want to rotate on a schedule, use **rotate** in the portal. That issues
-a new secret and shows it once. Deliveries signed with the old secret stop verifying immediately,
-so update your endpoint in the same window.
+If you lose it, or want to rotate it, create a new webhook with a new secret, update your
+endpoint, then delete the old webhook.
 
 ## Test a webhook
 
-Developer Portal → Webhooks → select endpoint → **Send Test Event**. Inspect the delivery log for status code, response time, and response body.
+Developer Portal → **Webhooks** → click **Test** on the webhook. SusaPlay sends one test
+delivery; check your server's logs for it. The portal shows only when the webhook last fired —
+there is no delivery log.

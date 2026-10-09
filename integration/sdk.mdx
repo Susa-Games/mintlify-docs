@@ -64,12 +64,13 @@ string name = SusaPlaySDK.Auth.DisplayName;
 
 if (SusaPlaySDK.Auth.IsGuest)
 {
-    // Guest session — progress is tied to the browser, not an account.
+    // Guest: no platform session. Saves, achievements, the wallet and analytics
+    // are refused until the player signs in, so keep guest progress locally.
 }
 ```
 
-Guest-to-account merging is handled by the platform when the player signs in. The game does not
-drive it.
+Rewards from ads watched as a guest are credited when the player signs in; nothing else carries
+over automatically. The game does not drive the sign-in.
 
 ## Economy
 

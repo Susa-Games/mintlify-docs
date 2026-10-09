@@ -5,9 +5,14 @@ description: "Persist player progress across devices and sessions"
 
 ## Overview
 
-Cloud saves store one payload per slot, per player, per game. The payload is an opaque string —
-serialize your own state into it. The platform versions each write and applies it inside a
-server-side transaction.
+Cloud saves store one payload per slot, per player, per game. The payload is JSON text that you
+serialize yourself, usually with `JsonUtility.ToJson`. The platform versions each write and
+applies it inside a server-side transaction.
+
+<Note>
+Cloud saves need a signed-in player. A guest has no platform session, so a guest's save and load
+calls fail. Keep a guest's progress locally and save it once the player signs in.
+</Note>
 
 ## Write a save
 
@@ -20,38 +25,43 @@ var payload = JsonUtility.ToJson(new SaveState
 
 var saved = await SusaPlaySDK.CloudSave.Save("main", payload);
 
-if (saved.success)
+if (saved.Success)
 {
-    Debug.Log($"Saved as version {saved.data.version}");
+    Debug.Log($"Saved as version {saved.Version}");
 }
 ```
 
-You do not supply a version. The server assigns the next one and returns it.
+You do not supply a version. The SDK sends the slot's last version, and the server returns the
+next one.
 
 ## Read a save
 
 ```csharp
 var loaded = await SusaPlaySDK.CloudSave.Load("main");
 
-if (loaded.success)
+if (loaded.Success && !string.IsNullOrEmpty(loaded.Data))
 {
-    var state = JsonUtility.FromJson<SaveState>(loaded.data.data);
+    var state = JsonUtility.FromJson<SaveState>(loaded.Data);
     ApplyProgress(state);
+}
+else if (loaded.Success)
+{
+    StartFreshGame(); // nothing saved in this slot yet
 }
 else
 {
-    StartFreshGame();
+    Debug.LogWarning($"Load failed: {loaded.Error}");
 }
 ```
 
-`success` is false both when the read failed and when the slot has never been written, so treat
-it as "no save yet".
+A slot that has never been written is not a failure: `Success` is true, `Data` is empty and
+`Version` is `0`. `Success` is false only when the read failed.
 
 ## Serializing state
 
 Unity's `JsonUtility` only handles serializable fields on concrete classes — no dictionaries, no
 polymorphism. For nested or dynamic state, either flatten it into a serializable class or bring
-your own JSON library.
+your own JSON library. Whatever you use, the payload must be valid JSON.
 
 ```csharp
 [System.Serializable]
@@ -75,15 +85,19 @@ await SusaPlaySDK.CloudSave.Save("settings", settingsJson);
 
 ## Concurrency
 
-Two sessions writing the same slot cannot corrupt each other — writes are transactional and the
-later one wins with a higher version.
+If another tab or device saved the slot first, the server refuses the write with
+`409 VERSION_CONFLICT`. The SDK reads the slot's new version and writes again, up to three
+attempts, so the last write wins.
 
 The SDK has no merge callback. If your game can realistically run in two tabs at once and
 last-write-wins is not acceptable, read immediately before writing and merge in your own code.
 
 ## Rules
 
-- Keep each slot under 500 KB
+- Keep each slot under 500,000 characters. The server measures the JSON after re-serializing it,
+  which can add a little, so leave headroom
 - Never store payment details or auth tokens in a save
 - Save at natural checkpoints, not every frame — each write is a network round trip
 - Keep unsaved state in memory when a write fails, and retry rather than dropping progress
+
+See [Saves](/sdk/saves) for the full `SaveResult` and `LoadResult` reference.

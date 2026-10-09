@@ -67,8 +67,8 @@ relative path.
 
 | Field | Meaning |
 | --- | --- |
-| `Success` | The partner answered successfully |
-| `Data` | The partner's response, as JSON |
+| `Success` | The request reached the partner and it answered — with any HTTP status, errors included |
+| `Data` | `{partnerId, gameId, status, contentType, data}`: `status` is the partner's HTTP status, `data` its body. Check `status` |
 | `ErrorCode`, `ErrorMessage` | Why it failed |
 
 | `ErrorCode` | Meaning |
@@ -80,5 +80,8 @@ relative path.
 | `FAILED_PRECONDITION` | The partner's API is not set up |
 | `PARTNER_API_UNAVAILABLE` | The partner's server could not be reached |
 | `PAYLOAD_TOO_LARGE` | The partner's response was too large to forward |
+| `UNAUTHENTICATED` | The partner session expired (launch tokens last 5 minutes) |
+| `FORBIDDEN` | The session belongs to another game |
+| `INTERNAL`, `REQUEST_FAILED` | The page or the SDK could not complete the call |
 
 The partner's base URL and allowed paths are set by SusaPlay when the partnership is configured.
