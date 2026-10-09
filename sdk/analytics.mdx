@@ -14,12 +14,12 @@ session length is derived from event timestamps on the server rather than report
 ## Custom events
 
 ```csharp
-SusaPlaySDK.Analytics.LogEvent("level_start");
+SusaPlaySDK.Analytics.LogEvent("tutorial_complete");
 
 // With parameters — pass a JSON object as a string
 SusaPlaySDK.Analytics.LogEvent(
-    "level_complete",
-    "{\"levelId\":\"world_2_level_3\",\"attempt\":2}");
+    "level_start",
+    "{\"levelId\":\"world_2_level_3\"}");
 ```
 
 `LogEvent` is synchronous and queues in memory — safe to call from gameplay code.
@@ -56,6 +56,37 @@ end-of-session signal cannot be produced from Unity.
 
 Purchase revenue is recorded server-side from the payment webhook, not by the SDK. You do not
 need to log a purchase event yourself.
+
+## Recommended events
+
+SusaPlay asks every game to send these events where the game has the moment they describe. They
+cover what only your game knows — sessions, purchases, achievements, saves and `level_up` are
+already recorded by the platform, so do not log them again.
+
+| Event | Parameters | Send when |
+| --- | --- | --- |
+| `level_start` | `levelId` | A level, stage or round begins |
+| `level_complete` | `levelId`, `durationSeconds`; `score` if your game has one | The player finishes it |
+| `level_fail` | `levelId`, `durationSeconds`; `reason` if known, such as `"timeout"` | The player fails or quits it |
+| `tutorial_begin` | — | The tutorial starts |
+| `tutorial_complete` | — | The tutorial ends |
+| `currency_earn` | `currency`, `amount`, `source` | The player earns your game's own currency — not the SusaPlay wallet |
+| `currency_spend` | `currency`, `amount`, `itemId` | The player spends your game's own currency |
+| `store_open` | `placement`, such as `"main_menu"` | Your game's store or shop screen opens |
+
+```csharp
+SusaPlaySDK.Analytics.LogEvent(
+    "level_complete",
+    "{\"levelId\":\"world_1_3\",\"durationSeconds\":74,\"score\":1200}");
+```
+
+Use exactly these names and parameter names, so the same reports work for every game, and add
+any other events your game needs alongside them. `levelId` is a stable id your game already uses,
+not a display name. Skip an event your game has no moment for.
+
+<Note>
+These events reach the raw event export today. They are not yet charted in the Developer Portal.
+</Note>
 
 ## Viewing data
 
