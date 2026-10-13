@@ -8,7 +8,7 @@ description: "Define currencies, store items, and purchase metadata"
 Economy config is developer-owned metadata stored per game. It defines:
 
 - **Currencies** — virtual currencies players earn and spend
-- **Store items** — purchasable items with pricing and, for real-money items, their provider SKU
+- **Store items** — purchasable items, each priced on a SusaPlay price tier
 
 Changes take effect immediately — no release needed.
 
@@ -41,9 +41,28 @@ currency_1    Bad — meaningless, invites renaming later
 | ID | Yes | Stable item identifier |
 | Name | Yes | Display name |
 | Type | No | `durable` (owned forever, the default) or `consumable` (used once) |
-| Price currency | Yes | Must match a configured currency ID |
-| Price amount | Yes | Cost in that currency |
-| Provider SKU | No | The identifier this item is sold under at the payment provider. Required only if the item is sold for real money; the platform resolves it at checkout |
+| Price | Yes | A price from SusaPlay's price list, from $0.99 to $99.99 |
+| Also allow buying with SusaPlay coins | No | Off by default. See below |
+
+### Prices
+
+You pick an item's price from a fixed list — the same price points app stores use. You never
+enter an amount or a payment provider SKU: SusaPlay sells every item at a given price through
+one catalog entry it manages. Prices are shown in US dollars; players pay the equivalent in their
+own currency at checkout.
+
+If SusaPlay takes a price off sale, items on it stay in your config but cannot be bought with
+money until you choose another price. The editor marks them.
+
+### Paying with coins
+
+Players earn SusaPlay coins by watching rewarded ads. Tick **Also allow buying with SusaPlay
+coins** to let them spend coins on an item; the editor shows how many coins that is.
+
+<Warning>
+  A coin purchase earns you nothing. Only money purchases are paid out to you. Allow coins on an
+  item to promote it.
+</Warning>
 
 <Note>
   SusaPlay runs on WebGL. There are no iOS or Android store product IDs to configure — real-money

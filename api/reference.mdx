@@ -84,6 +84,8 @@ Timestamps are ISO 8601 strings, except `expiresAt` fields, which are Unix secon
 | `DUPLICATE_ITEM` | 409 | A durable item the player already owns |
 | `ITEM_NOT_FOUND` | 404 | No store item with that ID |
 | `TOPUP_PACK_NOT_FOUND` | 404 | No top-up pack with that ID |
+| `ITEM_NOT_PURCHASABLE` | 409 | The item's price is not on sale, so it cannot be bought with money right now |
+| `SIGN_IN_REQUIRED` | 403 | Paying, spending coins and earning coins need a signed-in player |
 | `DUPLICATE_PURCHASE` | 409 | This rewarded-ad completion was already credited |
 | `ADS_DISABLED` | 403 | Ads are turned off for the game |
 | `AD_REWARD_COOLDOWN`, `AD_REWARD_LIMIT_REACHED` | 429 | Rewarded-ad cooldown or daily maximum |

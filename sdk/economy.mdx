@@ -8,8 +8,8 @@ a transaction, but it can never write a balance.
 
 ## Platform wallet
 
-The platform wallet is shared across games. Players top it up with real money and spend it
-anywhere on SusaPlay.
+The platform wallet holds the player's SusaPlay coins, shared across games. Players earn coins by
+watching rewarded ads, and spend them anywhere on SusaPlay where a developer allows it.
 
 ```csharp
 var wallet = await SusaPlaySDK.Purchases.GetPlatformWallet();
@@ -25,9 +25,29 @@ if (wallet.Success)
 var store = await SusaPlaySDK.Purchases.GetStoreItems();
 ```
 
-Items come from the economy config you defined in the Developer Portal. The response carries the
-id, name, description, icon, type, price and whether the item can be bought with wallet balance —
-it deliberately does not include the provider SKU, which the platform resolves at checkout.
+Items come from the economy config you defined in the Developer Portal. Each item has a money
+price, and a coin price when you allowed paying with coins:
+
+```csharp
+foreach (var item in store.Items)
+{
+    if (item.directPurchaseEnabled)
+        ShowBuyButton(item, $"${item.cashPrice.amount:0.00}");   // money
+
+    if (item.walletPurchaseEligible)
+        ShowCoinButton(item, item.coinPrice);                     // coins
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `cashPrice` | The money price: `amount` and `currency` for display, `amountMinor` (e.g. `499`) for comparisons |
+| `coinPrice` | The coin price, or `0` when the item cannot be bought with coins |
+| `directPurchaseEnabled` | It can be bought with money now |
+| `walletPurchaseEligible` | It can be bought with coins now |
+
+Disable the coin button while the player's balance is below `coinPrice`. These fields need SDK
+1.11.0; on older SDKs `price` carries the coin price.
 
 ## Spending
 
@@ -44,8 +64,8 @@ else
 }
 ```
 
-The price is read from the economy config inside the same transaction that debits the wallet, so
-a price change mid-flight cannot be exploited.
+The server charges the item's coin price; your game never sends a price. A spend is refused
+unless you allowed paying with coins for the item.
 
 Grant the item in your game only after `Success` is true. Never grant optimistically.
 
@@ -101,7 +121,7 @@ next session rather than assuming a cancelled checkout means no charge.
 
 ## Sandbox
 
-Every checkout method (`StartPurchase`, `StartDirectItemPurchase`, `StartWalletTopupPurchase`) takes a `sandbox` flag, which **requests** the test lane:
+Every checkout method (`StartDirectItemPurchase`, `StartWalletTopupPurchase`) takes a `sandbox` flag, which **requests** the test lane:
 
 ```csharp
 await SusaPlaySDK.Purchases.StartDirectItemPurchase("starter_pack", sandbox: true);
@@ -117,6 +137,11 @@ to credit.
 
 Not supported. SusaPlay runs on WebGL, and the native store receipt-validation path has been
 removed. Every real-money purchase goes through the browser checkout described above.
+
+<Note>
+`StartPurchase()` is obsolete since SDK 1.11.0. It names no item, and the platform refuses that:
+use `StartDirectItemPurchase(itemId)`.
+</Note>
 
 <Note>
 SDK 1.5.0 renamed the purchase API off the payment provider: `StartXsollaPurchase` is now
