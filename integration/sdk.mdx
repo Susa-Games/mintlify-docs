@@ -17,7 +17,7 @@ Add the package to your `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "com.susaplay.sdk": "https://github.com/Susa-Games/com.susaplay.sdk.git#v1.9.1"
+    "com.susaplay.sdk": "https://github.com/Susa-Games/com.susaplay.sdk.git#v1.11.0"
   }
 }
 ```
@@ -69,8 +69,8 @@ if (SusaPlaySDK.Auth.IsGuest)
 }
 ```
 
-Rewards from ads watched as a guest are credited when the player signs in; nothing else carries
-over automatically. The game does not drive the sign-in.
+A guest earns no platform coins for rewarded ads, but your game's own reward for a watched ad
+works for a guest too. Nothing carries over automatically when a guest signs in. The game does not drive the sign-in.
 
 ## Economy
 

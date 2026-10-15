@@ -17,7 +17,7 @@ WebGL build. The request needs:
 
 | Requirement | Where to set it |
 | --- | --- |
-| Thumbnail | Overview → thumbnail |
+| Landscape cover | Overview → Covers |
 | Description of at least 200 characters | Overview → edit details |
 | URL slug | Overview → edit details → SEO |
 
@@ -35,7 +35,7 @@ approved; a B2B game that already has a live build cannot be switched from the p
 
 - All functional flows work from a cold start with a fresh player account
 - Economy flows (purchases, rewards, wallet) match the economy config
-- Provider SKUs are set on every item sold for real money
+- Every item sold for real money has a price tier that is on sale
 - No crashes on the target platforms
 - Build structure is correct (WebGL: `index.html` at root)
 
@@ -47,7 +47,7 @@ approved; a B2B game that already has a live build cannot be switched from the p
 
 ```text
 Register player → open wallet → buy item → verify inventory
-Watch ad → verify reward credited
+Watch a rewarded ad → verify the game grants its reward when `Rewarded` is true
 ```
 
 **Check your release notes include:**

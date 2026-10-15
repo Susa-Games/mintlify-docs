@@ -29,7 +29,7 @@ is written to the platform, so you can test as often as you like, with or withou
   <Step title="Download your game's configuration">
     In the [Developer Portal](https://dev.susaplay.com), open your game and click
     **Download for Unity Editor**. You get `SimulatorConfig.json`: your achievement definitions,
-    store items, top-up packs and ad settings.
+    store items, top-up packs, ad settings and the platform's coin rules.
   </Step>
   <Step title="Import it">
     In Unity, open **SusaPlay → Simulator** and click **Import configuration…**. The file is copied
@@ -45,9 +45,13 @@ The configuration holds nothing secret — IDs, names, prices and ad settings yo
 shows players — and it never reaches a build. After you change achievements, items or ad settings
 in the portal, download and import it again; the window shows how old the imported file is.
 
+From SDK 1.11.0, a coin spend charges the item's exported coin price and needs the item's coin
+opt-in. A configuration downloaded before 2026-10-13 has no coin prices, so every coin spend fails
+with `409 INVALID_STATE` — download a fresh one.
+
 Without a configuration, the simulator behaves like the platform for a game with nothing
-configured: the store is empty, every achievement is `NOT_FOUND` and every purchase fails with
-`ITEM_NOT_FOUND`. Saves, analytics, custom events, sign-in and ads work fully either way.
+configured: the store is empty, every achievement is `NOT_FOUND`, coin spends fail with
+`ITEM_NOT_FOUND` and checkout purchases return `token-failed`. Saves, analytics, custom events, sign-in and ads work fully either way.
 
 ## What the simulator does
 

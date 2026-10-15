@@ -19,7 +19,7 @@ Go to [dev.susaplay.com](https://dev.susaplay.com) → **Register Game**.
 | --- | --- |
 | Name | Public-facing title shown in the developer catalog |
 | Description | Required. Summary for reviewers — mention gameplay loop and target audience. A public game needs at least 200 characters before it can go public |
-| Thumbnail | Required. JPEG, PNG, or WebP, under 5 MB — shown on the game's card. Replace it later from the Overview tab |
+| Thumbnail (landscape cover) | Required. Choose a JPEG, PNG, or WebP image, then crop it to 16:9 — shown on the game's card. Replace it later from the Overview tab |
 | Genre | Used for internal filtering — pick the closest fit |
 | Distribution | `Public` or `B2B` — determines who can access the game shell |
 
@@ -43,12 +43,23 @@ SusaPlay runs WebGL games only, so there is no platform to choose.
 
 You can tick **Upload the first build now** to go straight to the Builds tab, or upload it later.
 
-### 4. Add screenshots
+### 4. Add covers and screenshots
 
-Add up to 3 screenshots showing real gameplay — JPEG, PNG, or WebP, under 5 MB each. They are not
-required to request going public, but reviewers look for them.
+The game's **Overview** tab has a **Covers** section with three slots. Each image is cropped in
+the portal to its slot's shape when you choose it, so the site never cuts part of it off.
 
-SVG is rejected. To add a fourth screenshot you have to delete an existing one first.
+| Image | Ratio | Minimum | Exported at (up to) | Required |
+| --- | --- | --- | --- | --- |
+| Landscape cover | 16:9 | 1280×720 | 1920×1080 | Yes |
+| Square cover | 1:1 | 512×512 | 800×800 | No — the landscape cover is used where it is missing |
+| Portrait cover | 2:3 | 600×900 | 800×1200 | No — stored for upcoming layouts |
+| Screenshots (up to 3) | 16:9 | 1280×720 | 1920×1080 | No |
+
+Keep the three covers consistent — same art, same title — and put no other text on them.
+
+Add up to 3 screenshots showing real gameplay. They are not required to request going public,
+but reviewers look for them. Source images must be JPEG, PNG, or WebP; SVG is rejected. To add a
+fourth screenshot you have to delete an existing one first.
 
 ## Next steps
 

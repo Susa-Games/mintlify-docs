@@ -93,7 +93,7 @@ var packs = await SusaPlaySDK.Purchases.GetTopupPacks();
 | Field | Type | Notes |
 | --- | --- | --- |
 | `Success` | `bool` | True only when payment completed and rewards were credited |
-| `Status` | `string` | `paid` (or the provider's `done` or `successful`); `invalid-request` (no item or pack ID); `canceled` or `dismissed` (the player canceled or closed checkout); `auth-dismissed` (a guest declined to sign in); `token-failed` (checkout could not start — `ErrorMessage` says why); `timeout` |
+| `Status` | `string` | `paid` (or the provider's `done` or `successful`); `invalid-request` (no top-up pack ID); `canceled` or `dismissed` (the player canceled or closed checkout); `auth-dismissed` (a guest declined to sign in); `token-failed` (checkout could not start — `ErrorMessage` says why); `timeout` |
 | `WalletScope` | `string` | `live` or `sandbox` — which wallet the balance landed in. Empty when checkout never opened |
 | `Wallet` | object | Game wallet balance after the transaction |
 | `PlatformWallet` | object | Platform wallet balance after the transaction |
@@ -139,6 +139,9 @@ Not supported. SusaPlay runs on WebGL, and the native store receipt-validation p
 removed. Every real-money purchase goes through the browser checkout described above.
 
 <Note>
+An item that cannot be bought with money right now (its price tier is off sale or not set) gives
+`token-failed` before checkout opens; check `directPurchaseEnabled` before showing the button.
+
 `StartPurchase()` is obsolete since SDK 1.11.0. It names no item, and the platform refuses that:
 use `StartDirectItemPurchase(itemId)`.
 </Note>
