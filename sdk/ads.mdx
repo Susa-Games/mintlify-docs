@@ -65,12 +65,12 @@ that matters.
 
 | `Reason` | Meaning |
 | --- | --- |
-| `ADS_DISABLED` | Ads are turned off in your game's ad settings |
+| `ADS_DISABLED` | This ad type is turned off in your game's ad settings |
 | `TIMEOUT` | The SDK had no answer after 180 seconds |
 | anything else | Reported by the ad network the platform chose |
 
-While rewarded ads are turned off, every ad request fails with `ADS_DISABLED` — interstitials
-included.
+Rewarded ads and interstitials are turned on and off separately. A request for a type that is
+turned off fails with `ADS_DISABLED`; the other type keeps working.
 
 Your game's ad settings are managed by SusaPlay. Contact us to change them.
 

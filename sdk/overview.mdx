@@ -92,6 +92,25 @@ every module is ready in Play Mode without a build. See
 [Test in the Unity Editor](/sdk/editor-simulator).
 </Tip>
 
+## Back to the partner's app
+
+When a partner opens your game inside their own app, the player needs a way back. Show a button
+for it only when `CanExitToHost` is true, and call `ExitToHost()` when it is tapped:
+
+```csharp
+backButton.SetActive(SusaPlaySDK.CanExitToHost);
+
+async void OnBackPressed()
+{
+    await SusaPlaySDK.CloudSave.Save("progress", currentProgressJson);
+    SusaPlaySDK.ExitToHost();
+}
+```
+
+`CanExitToHost` is false on SusaPlay itself, where there is no app to return to. Save first:
+the partner may close the game as soon as it gets the request. Requires SDK 1.12.0 or later. In
+the Editor Simulator, turn on **Inside a partner's app** to test the button.
+
 ## Version
 
 The SDK reports its version to the shell during the handshake. Current release: **1.11.0**.

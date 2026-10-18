@@ -118,8 +118,8 @@ continue** carries the purchase on; **Dismiss** answers `auth-dismissed` with `A
 A completed rewarded ad is always `Rewarded`. Platform coins follow the platform's rules from the
 configuration file — the amount, the daily maximum and the cooldown, with the defaults of 1 coin,
 10 a day and 30 minutes apart. Past the maximum, inside the cooldown or as a guest, the ad is still
-`Rewarded` and `CoinsAwarded` is `0`. With rewarded ads turned off in your settings, every ad,
-interstitials included, fails with `ADS_DISABLED`.
+`Rewarded` and `CoinsAwarded` is `0`. An ad type turned off in your settings
+(`adSettings.rewarded.enabled` or `adSettings.interstitial.enabled`) fails with `ADS_DISABLED`.
 
 ### Failures
 
