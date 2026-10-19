@@ -57,10 +57,15 @@
   },
   "logo": {
     "light": "/logo/susaplay.png",
-    "dark": "/logo/susaplay.png"
+    "dark": "/logo/susaplay.png",
+    "href": "https://susaplay.com"
   },
   "navbar": {
     "links": [
+      {
+        "label": "Play games",
+        "href": "https://susaplay.com"
+      },
       {
         "label": "Support",
         "href": "mailto:support@susaplay.com"
@@ -85,6 +90,41 @@
     ]
   },
   "footer": {
-    "socials": {}
+    "socials": {
+      "website": "https://susaplay.com",
+      "github": "https://github.com/Susa-Games"
+    },
+    "links": [
+      {
+        "header": "SusaPlay",
+        "items": [
+          {
+            "label": "Play games",
+            "href": "https://susaplay.com"
+          },
+          {
+            "label": "For developers",
+            "href": "https://susaplay.com/developers"
+          },
+          {
+            "label": "Developer Portal",
+            "href": "https://dev.susaplay.com"
+          }
+        ]
+      },
+      {
+        "header": "Company",
+        "items": [
+          {
+            "label": "Susa Games",
+            "href": "https://www.susa.games"
+          },
+          {
+            "label": "Publishing terms",
+            "href": "https://susaplay.com/publishing-terms"
+          }
+        ]
+      }
+    ]
   }
 }
