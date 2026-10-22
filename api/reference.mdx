@@ -27,15 +27,16 @@ When App Check is enforced, player routes also need an `X-Firebase-AppCheck` hea
 SusaPlay page supplies it.
 
 Developer endpoints — reading games, versions, Addressables and analytics, build uploads,
-preview links, and Addressables upload, publish and rollback — also accept a developer API key,
+preview links, Addressables upload, publish and rollback, and adding store items and
+achievements — also accept a developer API key,
 for pipelines and AI tools:
 
 ```bash
 Authorization: ApiKey {developer_api_key}
 ```
 
-A key holds some of five permissions: `games:read`, `analytics:read`, `builds:write`,
-`addressables:write` and `addressables:publish`. See [API Keys](/integration/api-keys).
+A key holds some of six permissions: `games:read`, `analytics:read`, `builds:write`,
+`addressables:write`, `addressables:publish` and `game-config:write`. See [API Keys](/integration/api-keys).
 
 Partner endpoints use a partner key:
 
@@ -96,6 +97,7 @@ Timestamps are ISO 8601 strings, except `expiresAt` fields, which are Unix secon
 | `CONFLICT` | 409 | The state changed since you planned the request. Plan it again |
 | `INCOMPATIBLE_CATALOG` | 409 | The Addressables content would break the live build. `error.compatibility` holds the check's result |
 | `OPERATION_IN_PROGRESS` | 409 | Another Addressables publish or rollback is running for this game |
+| `ALREADY_EXISTS` | 409 | The store item or achievement ID is already registered |
 | `INVALID_STATE` | 409 | The request does not fit the item's state — for example, paying with coins is not allowed for this item |
 | `INVALID_IMAGE` | 400 | An uploaded image has the wrong format or shape |
 | `RELEASE_INCOMPLETE` | 409 | An Addressables release can no longer be restored because files it needs are gone |

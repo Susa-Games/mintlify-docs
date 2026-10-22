@@ -50,11 +50,12 @@ Each key holds only the permissions you choose when you create it.
 
 | Permission | Allows |
 | --- | --- |
-| `games:read` | Reading your games, their versions, their Addressables state and their Editor Simulator configuration |
+| `games:read` | Reading your games, their versions, their Addressables state, their store items and achievements, and their Editor Simulator configuration |
 | `analytics:read` | Reading analytics |
 | `builds:write` | Uploading builds, checking a build's processing status, and creating preview and share links |
 | `addressables:write` | Uploading and registering Addressables files in staging, and planning a publish or rollback (`dryRun`) |
 | `addressables:publish` | Publishing Addressables staging live, and rolling back to an earlier release |
+| `game-config:write` | Adding new store items and achievements. Never editing or deleting them, which stays in the portal |
 
 A request that needs a permission the key does not hold is refused with `403` and the code
 `INSUFFICIENT_SCOPE`. The response names the missing permission in `requiredScope`.
@@ -63,7 +64,7 @@ When you create a key, pick a preset or choose the permissions yourself:
 
 | Preset | Permissions |
 | --- | --- |
-| AI assistant (recommended for AI coding tools) | `games:read`, `analytics:read`, `builds:write`, `addressables:write` |
+| AI assistant (recommended for AI coding tools) | `games:read`, `analytics:read`, `builds:write`, `addressables:write`, `game-config:write` |
 | AI assistant with live publishing | The above, and `addressables:publish` |
 | CI publishing | `games:read`, `builds:write`, `addressables:write`, `addressables:publish` |
 | Read only | `games:read`, `analytics:read` |

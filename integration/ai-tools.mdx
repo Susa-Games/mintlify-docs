@@ -30,7 +30,7 @@ In the Developer Portal → **API Keys**, create a key with one of these presets
 
 | Preset | The assistant can |
 | --- | --- |
-| **AI assistant** (recommended) | Read your games and analytics, check projects and builds, upload builds, stage Addressables and show the publish plan |
+| **AI assistant** (recommended) | Read your games and analytics, check projects and builds, upload builds, stage Addressables and show the publish plan, add store items and achievements |
 | **AI assistant with live publishing** | All of the above, and publish or roll back Addressables — which changes what players download |
 
 Name the key after the machine and tool, such as "Claude Code — laptop", so you can revoke it
@@ -123,6 +123,9 @@ that tools supporting the open skills format can load.
 | `get_analytics` | Daily and 30-day active players, D1/D7/D30 retention. No revenue | No |
 | `check_project` | Checks the Unity project's SDK and Addressables settings | No |
 | `inspect_build` | Checks a WebGL build against the upload rules and its Addressables catalog | No |
+| `get_game_config` | Your game's store items, achievements, and the price tiers a new item can use | No |
+| `add_store_item` | Registers a new store item, after you confirm it. Create only | A new item in your store |
+| `add_achievement` | Registers a new achievement, after you confirm it. Create only | A new achievement |
 | `sync_simulator_config` | Writes your game's configuration for the [Editor Simulator](/sdk/editor-simulator) into the project | The project file only |
 | `publish_build` | Uploads a build: into review, or as `ready` for a private game | A new build; [retention](/integration/builds#build-retention) may delete old ones |
 | `create_preview_link` | A single-use, 30-minute link to play a build in review or `ready` | A preview session |
@@ -135,8 +138,14 @@ The assistant is told to show you the plan and get your confirmation before it p
 back Addressables. The server refuses content that would break your live build either way.
 
 Not available to an assistant, on purpose: registering a game, enabling Addressables, deleting
-staged files, webhooks and their secrets, economy settings, API keys, and **Request public**.
-Those stay in the Developer Portal.
+staged files, webhooks and their secrets, editing or deleting store items and achievements,
+currencies, API keys, and **Request public**. Those stay in the Developer Portal.
+
+The assistant can add a new store item or achievement — so it can register an ID while writing
+the code that uses it — but never change or remove one: players may already own the item or have
+progress on the achievement. It shows you each one and adds it only after you confirm. Paying with
+coins stays off on a new item unless you explicitly agree, because a coin purchase earns you
+nothing. Keys created before October 22, 2026 lack this permission; create a new key to use it.
 
 ## Try it
 
